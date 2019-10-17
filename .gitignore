@@ -1,4 +1,5 @@
 *.pdf
 *.o
-Mytar
+*.out
+mytar
 *.tg.gz
