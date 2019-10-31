@@ -7,12 +7,15 @@
 */
 
 
-/* LIBRERIAS QUE UTILIZA MAIN.C */
+/* LIBRERIAS DEL SISTEMA QUE UTILIZA MAIN.C */
 #include <stdio.h>
 #include <ctype.h>
 #include <getopt.h>
 #include <stdlib.h>
 #include <string.h>
+
+/* LIBRERIAS PERSONALES QUE UTILIZA MAIN.C */
+#include "encrypted.h"
 
 /*
 * Funcion: MAIN
