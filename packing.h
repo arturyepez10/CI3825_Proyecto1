@@ -1,6 +1,6 @@
-#include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
-#include <dirent.h>
+#ifndef PACKING_h
+#define PACKING_h
 
 void recursive_tree(char *basePath, const int root);
+
+#endif

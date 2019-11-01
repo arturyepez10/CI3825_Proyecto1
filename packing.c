@@ -5,7 +5,6 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-
 /*
 * Funcion: recursiveTree
 * --------------------------
@@ -18,7 +17,8 @@
 * return: nada.
 */
 
-void recursive_tree(char *basePath, const int root) {
+void recursive_tree(char *basePath, const int root)
+{
     /* Se encarga de inicializar las variables que usaremos en el recorrido */
     int i;
     char path[1000];
@@ -30,19 +30,26 @@ void recursive_tree(char *basePath, const int root) {
     DIR *dir = opendir(basePath);
 
     /* Si no existe tal directorio entonces se sale de la funcion */
-    if (!dir) {
+    if (!dir)
+    {
         return;
     }
 
     /* Mientras existe un apuntador que devuelva readdir(), se seguira en el ciclo */
-    while ((dp = readdir(dir)) != NULL) {
+    while ((dp = readdir(dir)) != NULL)
+    {
         /* Mientras el directorio no sea el base, realiza unas actividades especiales para una correcta impresion */
-        if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0) {
-            for (i = 0; i < root; i++) {
-                if ( i%2 == 0 || i == 0) {
+        if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0)
+        {
+            for (i = 0; i < root; i++)
+            {
+                if (i % 2 == 0 || i == 0)
+                {
                     /* Identificador de que entra en una carpeta */
                     printf("|");
-                } else {
+                }
+                else
+                {
                     /* Espaciado para mejor identificacion */
                     printf(" ");
                 }
@@ -62,20 +69,4 @@ void recursive_tree(char *basePath, const int root) {
     }
     /* Cierra el actual directorio para liberar el espacio de memoria */
     closedir(dir);
-}
-
-
-/* SOLO CON MOTIVOS DE PRUEBAS */
-int test_main() {
-    /* Variable donde se almacenara el input del usuario */
-    char path[100];
-
-    /* Se recolecta respuesta del usuario */
-    printf("Direccion del directorio: ");
-    scanf("%s", path);
-
-    /* Llamada a la funcion */
-    recursive_tree(path, 0);
-
-    return 0;
 }
