@@ -16,6 +16,7 @@
 
 /* LIBRERIAS PERSONALES QUE UTILIZA MAIN.C */
 #include "encrypted.h"
+#include "packing.h"
 
 /*
 * Funcion: MAIN
