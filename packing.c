@@ -66,7 +66,7 @@ void recursive_tree(char *basePath, const int root) {
 
 
 /* SOLO CON MOTIVOS DE PRUEBAS */
-int main() {
+int test_main() {
     /* Variable donde se almacenara el input del usuario */
     char path[100];
 
