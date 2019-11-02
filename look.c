@@ -6,7 +6,6 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include "packing.h"
-#include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
 
@@ -22,12 +21,33 @@
 * return: nada.
 */
 
-int addContent(char *data)
+int addHeader(char *data)
 {
     FILE *fichero;
     fichero = fopen("./empaquetado", "a");
-    fwrite(data, sizeof(data), 1, fichero);
+    fputs(data, fichero);
+    fputs("\n", fichero);
     fclose(fichero);
+    return 0;
+}
+
+int addContent(FILE *data)
+{
+    FILE *fichero;
+    int data1;
+    fichero = fopen("./empaquetado", "a");
+    data1 = 0;
+    if (data != NULL)
+    {
+        while ((data1 = fgetc(data)) != EOF)
+        {
+            fputc(data1, fichero);
+        }
+    }
+    fputs("\n", fichero);
+    fclose(data);
+    fclose(fichero);
+    return 0;
 }
 
 void recursive_tree(char *basePath, const int root)
@@ -39,24 +59,12 @@ void recursive_tree(char *basePath, const int root)
     /* Crea un struct dirent que contiene informacion del directorio */
     struct dirent *dp;
     struct stat st;
-    char *cpy;
-    char *cpy2;
+    char str[255];
+    char buff[10000];
     FILE *fichero;
     DIR *dir;
     mode_t mode;
 
-    struct header
-    {
-        char *path;
-        long int perms;
-        int type;
-        char *owner;
-        char *group;
-        int blocks;
-    };
-    typedef struct header Header;
-    Header *newHeader;
-    newHeader = NULL;
     fichero = fopen(basePath, "r");
     if (fichero != NULL)
     {
@@ -66,12 +74,27 @@ void recursive_tree(char *basePath, const int root)
         {
             printf("Es carpeta, continuemos \n");
         }
-        else if (S_ISREG(mode))
+        else if (S_ISREG(mode) && strcmp(basePath, "./empaquetado"))
         {
-            printf("Es archivo hagamos algo diferente \n");
-            newHeader = (Header *)malloc(sizeof(Header));
-            strcpy(newHeader->path, basePath);
-            addContent(newHeader->path);
+            /*printf("header: %s &&& %i &&& %i &&& %i &&& %li &&& %li \n", basePath, st.st_mode, st.st_uid, st.st_gid, st.st_blocks, st.st_size);*/
+            strcpy(str, basePath);
+            printf("%s", str);
+            addHeader("START HEADER");
+            addHeader(str);
+            sprintf(buff, "%i", st.st_mode);
+            addHeader(buff);
+            sprintf(buff, "%i", st.st_uid);
+            addHeader(buff);
+            sprintf(buff, "%i", st.st_gid);
+            addHeader(buff);
+            sprintf(buff, "%li", st.st_blocks);
+            addHeader(buff);
+            sprintf(buff, "%li", st.st_size);
+            addHeader(buff);
+            addHeader("END HEADER");
+            addHeader("START PROGRAM");
+            addContent(fichero);
+            addHeader("END PROGRAM");
             return;
         }
         fclose(fichero);
@@ -101,17 +124,17 @@ void recursive_tree(char *basePath, const int root)
                 if (i % 2 == 0 || i == 0)
                 {
                     /* Identificador de que entra en una carpeta */
-                    printf("|");
+                    /*printf("|");*/
                 }
                 else
                 {
                     /* Espaciado para mejor identificacion */
-                    printf(" ");
+                    /*printf(" ");*/
                 }
             }
 
             /* Imprime en pantalla el nombre del archivo actual */
-            printf("|- %s\n", dp->d_name);
+            /*printf("|- %s\n", dp->d_name);*/
 
             /* Copia hacia la variable path el nuevo directorio base */
             strcpy(path, basePath);
