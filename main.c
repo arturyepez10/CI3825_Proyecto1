@@ -9,6 +9,6 @@ int main(int argc, char *argv[])
     FILE *fichero;
     fichero = fopen("./empaquetado", "w+");
     fclose(fichero);
-    recursive_tree(1, ".", 0);
+    recursive_tree(".", 1, 0, 1);
     return 0;
 }

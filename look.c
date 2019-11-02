@@ -21,6 +21,14 @@
 * return: nada.
 */
 
+int readTar(char *path)
+{
+    FILE *fichero;
+    fichero = fopen("./empaquetado", "r");
+    fclose(fichero);
+    return 0;
+}
+
 int addHeader(char *data)
 {
     FILE *fichero;
@@ -50,7 +58,7 @@ int addContent(FILE *data)
     return 0;
 }
 
-void recursive_tree(int bool1, char *basePath, const int root)
+void recursive_tree(char *basePath, const int root, int n, int v)
 {
     /* Se encarga de inicializar las variables que usaremos en el recorrido */
     int i;
@@ -72,13 +80,11 @@ void recursive_tree(int bool1, char *basePath, const int root)
         mode = st.st_mode;
         if (S_ISDIR(mode))
         {
-            printf("Es carpeta, continuemos \n");
         }
         else if (S_ISREG(mode) && strcmp(basePath, "./empaquetado"))
         {
             /*printf("header: %s &&& %i &&& %i &&& %i &&& %li &&& %li \n", basePath, st.st_mode, st.st_uid, st.st_gid, st.st_blocks, st.st_size);*/
             strcpy(str, basePath);
-            printf("%s", str);
             addHeader("START HEADER");
             addHeader(str);
             sprintf(buff, "%i", st.st_mode);
@@ -99,7 +105,7 @@ void recursive_tree(int bool1, char *basePath, const int root)
 
             fclose(fichero);
         }
-        else if (bool1 && (S_ISBLK(mode) || S_ISCHR(mode) || S_ISFIFO(mode) || S_ISLNK(mode)))
+        else if (n && (S_ISBLK(mode) || S_ISCHR(mode) || S_ISFIFO(mode) || S_ISLNK(mode)))
         {
             return;
         }
@@ -138,7 +144,10 @@ void recursive_tree(int bool1, char *basePath, const int root)
                 }
 
                 /* Imprime en pantalla el nombre del archivo actual */
-                /*printf("|- %s\n", dp->d_name);*/
+                if (v)
+                {
+                    printf("packing... %s \n", dp->d_name);
+                }
 
                 /* Copia hacia la variable path el nuevo directorio base */
                 strcpy(path, basePath);
@@ -146,9 +155,10 @@ void recursive_tree(int bool1, char *basePath, const int root)
                 strcat(path, dp->d_name);
 
                 /* LLamada recursiva hacia el nuevo directorio hijo, trasladando el root por 2 unidades para */
-                recursive_tree(bool1, path, root + 2);
+                recursive_tree(path, root + 2, n, v);
             }
         }
         /* Cierra el actual directorio para liberar el espacio de memoria */
         closedir(dir);
     }
+}
