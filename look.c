@@ -50,7 +50,7 @@ int addContent(FILE *data)
     return 0;
 }
 
-void recursive_tree(char *basePath, const int root)
+void recursive_tree(int bool1, char *basePath, const int root)
 {
     /* Se encarga de inicializar las variables que usaremos en el recorrido */
     int i;
@@ -96,55 +96,59 @@ void recursive_tree(char *basePath, const int root)
             addContent(fichero);
             addHeader("END PROGRAM");
             return;
+
+            fclose(fichero);
         }
-        fclose(fichero);
-    }
-    else if (fichero == NULL)
-    {
-        return;
-    }
-
-    /* Abre el directorio con la direccion especifica */
-    dir = opendir(basePath);
-
-    /* Si no existe tal directorio entonces se sale de la funcion */
-    if (dir == NULL)
-    {
-        return;
-    }
-
-    /* Mientras existe un apuntador que devuelva readdir(), se seguira en el ciclo */
-    while ((dp = readdir(dir)) != NULL)
-    {
-        /* Mientras el directorio no sea el base, realiza unas actividades especiales para una correcta impresion */
-        if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0)
+        else if (bool1 && (S_ISBLK(mode) || S_ISCHR(mode) || S_ISFIFO(mode) || S_ISLNK(mode)))
         {
-            for (i = 0; i < root; i++)
-            {
-                if (i % 2 == 0 || i == 0)
-                {
-                    /* Identificador de que entra en una carpeta */
-                    /*printf("|");*/
-                }
-                else
-                {
-                    /* Espaciado para mejor identificacion */
-                    /*printf(" ");*/
-                }
-            }
-
-            /* Imprime en pantalla el nombre del archivo actual */
-            /*printf("|- %s\n", dp->d_name);*/
-
-            /* Copia hacia la variable path el nuevo directorio base */
-            strcpy(path, basePath);
-            strcat(path, "/");
-            strcat(path, dp->d_name);
-
-            /* LLamada recursiva hacia el nuevo directorio hijo, trasladando el root por 2 unidades para */
-            recursive_tree(path, root + 2);
+            return;
         }
+        else if (fichero == NULL)
+        {
+            return;
+        }
+
+        /* Abre el directorio con la direccion especifica */
+        dir = opendir(basePath);
+
+        /* Si no existe tal directorio entonces se sale de la funcion */
+        if (dir == NULL)
+        {
+            return;
+        }
+
+        /* Mientras existe un apuntador que devuelva readdir(), se seguira en el ciclo */
+        while ((dp = readdir(dir)) != NULL)
+        {
+            /* Mientras el directorio no sea el base, realiza unas actividades especiales para una correcta impresion */
+            if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0)
+            {
+                for (i = 0; i < root; i++)
+                {
+                    if (i % 2 == 0 || i == 0)
+                    {
+                        /* Identificador de que entra en una carpeta */
+                        /*printf("|");*/
+                    }
+                    else
+                    {
+                        /* Espaciado para mejor identificacion */
+                        /*printf(" ");*/
+                    }
+                }
+
+                /* Imprime en pantalla el nombre del archivo actual */
+                /*printf("|- %s\n", dp->d_name);*/
+
+                /* Copia hacia la variable path el nuevo directorio base */
+                strcpy(path, basePath);
+                strcat(path, "/");
+                strcat(path, dp->d_name);
+
+                /* LLamada recursiva hacia el nuevo directorio hijo, trasladando el root por 2 unidades para */
+                recursive_tree(bool1, path, root + 2);
+            }
+        }
+        /* Cierra el actual directorio para liberar el espacio de memoria */
+        closedir(dir);
     }
-    /* Cierra el actual directorio para liberar el espacio de memoria */
-    closedir(dir);
-}
