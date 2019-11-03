@@ -32,8 +32,10 @@ int readTar(char *path, char *filename)
     char buf2[10000];
 
     /* Inicializan ambas variables que se encargan del path del archivo a empaquetar */
+    /*
     char *initialPath;
     char packingFileAddress[80];
+    */
 
     /* Se inicializan variables que tendran la informacion del archivo */
     char *fileAddress;
@@ -51,9 +53,11 @@ int readTar(char *path, char *filename)
     fileSize = malloc(100 * sizeof(char));
 
     /* Crea una variable con la ubicacion del archivo donde se va empaquetando todo [ESTO ES TEMPORAL?] */
+    /*
     initialPath = "./";
     strcpy(packingFileAddress, initialPath);
     strcat(packingFileAddress, filename);
+    */
 
     /* Abierto archivo empaquetado */
     fichero = fopen(filename, "r");
@@ -205,8 +209,10 @@ void recursive_tree(char *basePath, char *filename,const int root, int n, int v)
     char buff[10000];
 
     /* Inicializan ambas variables que se encargan del path del archivo a empaquetar */
+    /*
     char *initialPath;
     char packingFileAddress[80];
+    */
 
     /* Crea un struct dirent que contiene informacion del directorio */
     struct dirent *dp;
@@ -232,15 +238,17 @@ void recursive_tree(char *basePath, char *filename,const int root, int n, int v)
         mode = st.st_mode;
 
         /* Crea una variable con la ubicacion del archivo donde se va empaquetando todo [ESTO ES TEMPORAL?] */
+        /*
         initialPath = "./";
         strcpy(packingFileAddress, initialPath);
         strcat(packingFileAddress, filename);
+        */
 
         if (S_ISDIR(mode))
         {
             /* Si es directorio */
         }
-        else if (S_ISREG(mode) && strcmp(basePath, packingFileAddress))
+        else if (S_ISREG(mode) && strcmp(basePath, filename))
         {
             /* Si es archivo regular y si el archivo a empaquetar no es una version de si mismo */
 
