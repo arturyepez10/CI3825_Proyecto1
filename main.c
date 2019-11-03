@@ -3,6 +3,7 @@
 #include "encrypted.h"
 #include <stdbool.h>
 #include "look.h"
+#include "packing.h"
 #include <string.h>
 
 int main(int argc, char *argv[])
@@ -36,8 +37,10 @@ int main(int argc, char *argv[])
 
     printf("%s \n", newPath);
 
-    recursive_tree(".", newPath, 1, 0, 1);
 
-    /* readTar(".", newPath); */
+    /* packing(".", newPath, 1, 0, 1); */
+
+    packedInfo(".", newPath);
+
     return 0;
 }
