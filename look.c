@@ -195,12 +195,6 @@ void recursive_tree(char *basePath, char *filename,const int root, int n, int v)
     char str[255];
     char buff[10000];
 
-    /* Inicializan ambas variables que se encargan del path del archivo a empaquetar */
-    /*
-    char *initialPath;
-    char packingFileAddress[80];
-    */
-
     /* Crea un struct dirent que contiene informacion del directorio */
     struct dirent *dp;
 
