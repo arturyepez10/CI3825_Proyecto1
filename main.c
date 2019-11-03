@@ -9,6 +9,7 @@ int main(int argc, char *argv[])
     FILE *fichero;
     fichero = fopen("./empaquetado", "w+");
     fclose(fichero);
-    recursive_tree(".", 1, 0, 1);
+    recursive_tree(".", 1, 0, 0);
+    readTar("./empaquetado");
     return 0;
 }

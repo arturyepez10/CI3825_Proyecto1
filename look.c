@@ -24,7 +24,26 @@
 int readTar(char *path)
 {
     FILE *fichero;
+    char buf[10000];
+    char buf2[10000];
     fichero = fopen("./empaquetado", "r");
+    while (fscanf(fichero, "%s", buf) != -1)
+    {
+        strcpy(buf2, "");
+        if (strcmp(buf, "STARTHEADER") == 0)
+        {
+            fscanf(fichero, "%s", buf);
+            strcat(buf2, " ");
+            strcat(buf2, buf);
+            fscanf(fichero, "%s", buf);
+            strcat(buf2, " ");
+            strcat(buf2, buf);
+            fscanf(fichero, "%s", buf);
+            strcat(buf2, " ");
+            strcat(buf2, buf);
+        }
+        printf("%s", buf2);
+    }
     fclose(fichero);
     return 0;
 }
@@ -85,7 +104,7 @@ void recursive_tree(char *basePath, const int root, int n, int v)
         {
             /*printf("header: %s &&& %i &&& %i &&& %i &&& %li &&& %li \n", basePath, st.st_mode, st.st_uid, st.st_gid, st.st_blocks, st.st_size);*/
             strcpy(str, basePath);
-            addHeader("START HEADER");
+            addHeader("STARTHEADER");
             addHeader(str);
             sprintf(buff, "%i", st.st_mode);
             addHeader(buff);
@@ -97,13 +116,12 @@ void recursive_tree(char *basePath, const int root, int n, int v)
             addHeader(buff);
             sprintf(buff, "%li", st.st_size);
             addHeader(buff);
-            addHeader("END HEADER");
-            addHeader("START PROGRAM");
+            addHeader("ENDHEADER");
+            addHeader("STARTPROGRAM");
             addContent(fichero);
-            addHeader("END PROGRAM");
-            return;
-
+            addHeader("ENDPROGRAM");
             fclose(fichero);
+            return;
         }
         else if (n && (S_ISBLK(mode) || S_ISCHR(mode) || S_ISFIFO(mode) || S_ISLNK(mode)))
         {
