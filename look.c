@@ -24,8 +24,29 @@
 
 int readTar(char *path, char *filename)
 {
+    /*  */
     FILE *fichero;
-    fichero = fopen(filename, "r");
+    char buf[10000];
+    char buf2[10000];
+    fichero = fopen("./test.mytar", "r");
+    while (fscanf(fichero, "%s", buf) != -1)
+    {
+        strcpy(buf2, "");
+        if (strcmp(buf, "STARTHEADER") == 0)
+        {
+            fscanf(fichero, "%s", buf);
+            strcat(buf2, " ");
+            strcat(buf2, buf);
+            fscanf(fichero, "%s", buf);
+            strcat(buf2, " ");
+            strcat(buf2, buf);
+            fscanf(fichero, "%s", buf);
+            strcat(buf2, " ");
+            strcat(buf2, buf);
+            strcat(buf2, "\n");
+        }
+        printf("%s", buf2);
+    }
     fclose(fichero);
     return 0;
 }
@@ -104,6 +125,7 @@ void recursive_tree(char *basePath, char *filename,const int root, int n, int v)
     char str[255];
     char buff[10000];
 
+    /* */
     char *initialPath;
     char packingFileAddress[80];
 
@@ -147,7 +169,7 @@ void recursive_tree(char *basePath, char *filename,const int root, int n, int v)
             strcpy(str, basePath);
 
             /* Comienza el copiado del header en el archivo a empaquetar */
-            addHeader("START HEADER", filename);
+            addHeader("STARTHEADER", filename);
 
             /* Agrega direccion relativa del archivo o directorio */
             addHeader(str, filename);
@@ -171,15 +193,16 @@ void recursive_tree(char *basePath, char *filename,const int root, int n, int v)
             /* Agrega el tamaño del archivo en bytes */
             sprintf(buff, "%li", st.st_size);
             addHeader(buff, filename);
-            addHeader("END HEADER", filename);
+            addHeader("ENDHEADER", filename);
 
             /* Copia toda la data del archivo en el paquete */
-            addHeader("START PROGRAM", filename);
+            addHeader("STARTPROGRAM", filename);
             addContent(fichero, filename);
-            addHeader("END PROGRAM", filename);
+            addHeader("ENDPROGRAM", filename);
             return;
 
             fclose(fichero);
+            return;
         }
         else if (n && (S_ISBLK(mode) || S_ISCHR(mode) || S_ISFIFO(mode) || S_ISLNK(mode)))
         {

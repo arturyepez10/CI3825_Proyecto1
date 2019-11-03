@@ -24,5 +24,7 @@ int main(int argc, char *argv[])
 
     /* Empaqueta el archivo */
     recursive_tree(".", filename, 1, 0, 1);
+
+    readTar(".", filename);
     return 0;
 }
