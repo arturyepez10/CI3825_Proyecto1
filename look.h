@@ -1,6 +1,6 @@
 #ifndef LOOK_h
 #define LOOK_h
 
-void recursive_tree(char *basePath, const int root, int bool1, int v);
-int readTar(char *path);
+void recursive_tree(char *basePath, char *filename,const int root, int n, int v);
+int readTar(char *path, char *filename);
 #endif
