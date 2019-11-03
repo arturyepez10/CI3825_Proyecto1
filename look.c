@@ -31,6 +31,10 @@ int readTar(char *path, char *filename)
     char buf[10000];
     char buf2[10000];
 
+    /* Inicializan ambas variables que se encargan del path del archivo a empaquetar */
+    char *initialPath;
+    char packingFileAddress[80];
+
     /* Se inicializan variables que tendran la informacion del archivo */
     char *fileAddress;
     char *mode;
@@ -46,8 +50,13 @@ int readTar(char *path, char *filename)
     userId = malloc(100 * sizeof(char));
     fileSize = malloc(100 * sizeof(char));
 
+    /* Crea una variable con la ubicacion del archivo donde se va empaquetando todo [ESTO ES TEMPORAL?] */
+    initialPath = "./";
+    strcpy(packingFileAddress, initialPath);
+    strcat(packingFileAddress, filename);
+
     /* Abierto archivo empaquetado */
-    fichero = fopen("./test.mytar", "r");
+    fichero = fopen(filename, "r");
 
     /* Ciclo que se encarga de recorre todo el archivo abierto */
     while (fscanf(fichero, "%s", buf) != -1)
