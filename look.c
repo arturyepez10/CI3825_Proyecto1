@@ -31,12 +31,6 @@ int readTar(char *path, char *filename)
     char buf[10000];
     char buf2[10000];
 
-    /* Inicializan ambas variables que se encargan del path del archivo a empaquetar */
-    /*
-    char *initialPath;
-    char packingFileAddress[80];
-    */
-
     /* Se inicializan variables que tendran la informacion del archivo */
     char *fileAddress;
     char *mode;
@@ -51,13 +45,6 @@ int readTar(char *path, char *filename)
     permissions = malloc(100 * sizeof(char));
     userId = malloc(100 * sizeof(char));
     fileSize = malloc(100 * sizeof(char));
-
-    /* Crea una variable con la ubicacion del archivo donde se va empaquetando todo [ESTO ES TEMPORAL?] */
-    /*
-    initialPath = "./";
-    strcpy(packingFileAddress, initialPath);
-    strcat(packingFileAddress, filename);
-    */
 
     /* Abierto archivo empaquetado */
     fichero = fopen(filename, "r");
@@ -236,13 +223,6 @@ void recursive_tree(char *basePath, char *filename,const int root, int n, int v)
 
         /* Encuentra el mode, para verificar que tipo de archivo tenemos a la mano */
         mode = st.st_mode;
-
-        /* Crea una variable con la ubicacion del archivo donde se va empaquetando todo [ESTO ES TEMPORAL?] */
-        /*
-        initialPath = "./";
-        strcpy(packingFileAddress, initialPath);
-        strcat(packingFileAddress, filename);
-        */
 
         if (S_ISDIR(mode))
         {
