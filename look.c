@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-/* LIBRERIAS PERSONALES QUE UTILIZA MAIN.C */
+/* LIBRERIAS PERSONALES QUE UTILIZA LOOK.C */
 #include "packing.h"
 
 /*
@@ -24,30 +24,100 @@
 
 int readTar(char *path, char *filename)
 {
-    /*  */
+    /* Inicializado archivo que se leera */
     FILE *fichero;
+
+    /* Variables de buffer */
     char buf[10000];
     char buf2[10000];
+
+    /* Se inicializan variables que tendran la informacion del archivo */
+    char *fileAddress;
+    char *mode;
+    int intMode;
+    char *permissions;
+    char *userId;
+    char *fileSize;
+
+    /* Reserva de memoria para copiar archivos del buffer */
+    fileAddress = malloc(100 * sizeof(char));
+    mode = malloc(100 * sizeof(char));
+    permissions = malloc(100 * sizeof(char));
+    userId = malloc(100 * sizeof(char));
+    fileSize = malloc(100 * sizeof(char));
+
+    /* Abierto archivo empaquetado */
     fichero = fopen("./test.mytar", "r");
+
+    /* Ciclo que se encarga de recorre todo el archivo abierto */
     while (fscanf(fichero, "%s", buf) != -1)
     {
+        /* Vacia todo el buffer 2 */
         strcpy(buf2, "");
+
         if (strcmp(buf, "STARTHEADER") == 0)
         {
+            /* Si encuentra el comienzo de un header */
+
+            /* Copio la variable del nombre de la direccion y la manipulo */
             fscanf(fichero, "%s", buf);
-            strcat(buf2, " ");
-            strcat(buf2, buf);
+            strcpy(fileAddress, buf);
+
+            /* Copio la variable del mode y luego la pasa a entero*/
+            fscanf(fichero, "%s", buf);     
+            strcpy(mode, buf);
+            intMode = atoi(mode);
+
+            /* Todos los datos de permisologia extraidos del mode los agrega a la variable de permisos */
+            strcpy(permissions ,(S_ISDIR(intMode)) ? "d" : "-");
+            strcat(permissions ,(intMode & S_IRUSR) ? "r" : "-");
+            strcat(permissions ,(intMode & S_IWUSR) ? "w" : "-");
+            strcat(permissions ,(intMode & S_IXUSR) ? "x" : "-");
+            strcat(permissions ,(intMode & S_IRGRP) ? "r" : "-");
+            strcat(permissions ,(intMode & S_IWGRP) ? "w" : "-");
+            strcat(permissions ,(intMode & S_IXGRP) ? "x" : "-");
+            strcat(permissions ,(intMode & S_IROTH) ? "r" : "-");
+            strcat(permissions ,(intMode & S_IWOTH) ? "w" : "-");
+            strcat(permissions ,(intMode & S_IXOTH) ? "x" : "-");
+
+            /* Verifica si el archivo es un link simbolico */
+            strcat(permissions, " ");
+            strcat(permissions, (S_ISLNK(intMode)) ? "l" : "-");
+
+            /* Copia el user id del usuario */
             fscanf(fichero, "%s", buf);
+            strcpy(userId, buf);
+
+            /* Copio el tamaño del archivo */
+            fscanf(fichero, "%s", buf); 
+            fscanf(fichero, "%s", buf); 
+            fscanf(fichero, "%s", buf); 
+            strcpy(fileSize, buf);
+
+            /* Al final, se agrega en un orden especifico al buffer 2 */
             strcat(buf2, " ");
-            strcat(buf2, buf);
-            fscanf(fichero, "%s", buf);
+            strcat(buf2, permissions);
             strcat(buf2, " ");
-            strcat(buf2, buf);
-            strcat(buf2, "\n");
+            strcat(buf2, userId);
+            strcat(buf2, " ");
+            strcat(buf2, fileSize);
+            strcat(buf2, " ");
+            strcat(buf2, fileAddress);
+            strcat(buf2, "\n");        
         }
+        /* Imprime todo el buffer2 antes de reiniciar el ciclo */
         printf("%s", buf2);
     }
+
+    /* Se libera la memoria guardada con malloc */
+    free(fileAddress);
+    free(mode);
+    free(userId);
+    free(fileSize);
+
+    /* Se cierra archivo abierto */
     fclose(fichero);
+
     return 0;
 }
 
@@ -125,7 +195,7 @@ void recursive_tree(char *basePath, char *filename,const int root, int n, int v)
     char str[255];
     char buff[10000];
 
-    /* */
+    /* Inicializan ambas variables que se encargan del path del archivo a empaquetar */
     char *initialPath;
     char packingFileAddress[80];
 
