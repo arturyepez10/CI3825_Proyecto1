@@ -39,6 +39,9 @@ int readTar(char *path, char *filename)
     char *userId;
     char *fileSize;
 
+    /* Contador de memoria total en bytes */
+    int counter;
+
     /* Reserva de memoria para copiar archivos del buffer */
     fileAddress = malloc(100 * sizeof(char));
     mode = malloc(100 * sizeof(char));
@@ -48,6 +51,8 @@ int readTar(char *path, char *filename)
 
     /* Abierto archivo empaquetado */
     fichero = fopen(filename, "r");
+
+    counter = 0;
 
     /* Ciclo que se encarga de recorre todo el archivo abierto */
     while (fscanf(fichero, "%s", buf) != -1)
@@ -93,6 +98,7 @@ int readTar(char *path, char *filename)
             fscanf(fichero, "%s", buf); 
             fscanf(fichero, "%s", buf); 
             strcpy(fileSize, buf);
+            counter += atoi(fileSize);
 
             /* Al final, se agrega en un orden especifico al buffer 2 */
             strcat(buf2, " ");
@@ -101,13 +107,14 @@ int readTar(char *path, char *filename)
             strcat(buf2, userId);
             strcat(buf2, " ");
             strcat(buf2, fileSize);
-            strcat(buf2, " ");
+            strcat(buf2, "     \t ");
             strcat(buf2, fileAddress);
             strcat(buf2, "\n");        
         }
         /* Imprime todo el buffer2 antes de reiniciar el ciclo */
         printf("%s", buf2);
     }
+    printf("\nTotal bytes of files packed: %i\n", counter);
 
     /* Se libera la memoria guardada con malloc */
     free(fileAddress);
