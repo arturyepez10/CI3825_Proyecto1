@@ -7,6 +7,8 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <pwd.h>
+#include <grp.h>
 
 /* LIBRERIAS PERSONALES QUE UTILIZA LOOK.C */
 #include "packing.h"
@@ -36,7 +38,8 @@ int readTar(char *path, char *filename)
     char *mode;
     int intMode;
     char *permissions;
-    char *userId;
+    char *username;
+    char *groupname;
     char *fileSize;
 
     /* Contador de memoria total en bytes */
@@ -46,7 +49,8 @@ int readTar(char *path, char *filename)
     fileAddress = malloc(100 * sizeof(char));
     mode = malloc(100 * sizeof(char));
     permissions = malloc(100 * sizeof(char));
-    userId = malloc(100 * sizeof(char));
+    username = malloc(100 * sizeof(char));
+    groupname = malloc(100 * sizeof(char));
     fileSize = malloc(100 * sizeof(char));
 
     /* Abierto archivo empaquetado */
@@ -89,12 +93,15 @@ int readTar(char *path, char *filename)
             strcat(permissions, " ");
             strcat(permissions, (S_ISLNK(intMode)) ? "l" : "-");
 
-            /* Copia el user id del usuario */
+            /* Copia el username dueño del archivo */
             fscanf(fichero, "%s", buf);
-            strcpy(userId, buf);
+            strcpy(username, buf);
 
-            /* Copio el tamaño del archivo */
-            fscanf(fichero, "%s", buf); 
+            /* Copio el nombre del grupo del usuario */
+            fscanf(fichero, "%s", buf);
+            strcpy(groupname, buf);
+
+            /* Copio el tamaño del archivo */ 
             fscanf(fichero, "%s", buf); 
             fscanf(fichero, "%s", buf); 
             strcpy(fileSize, buf);
@@ -104,10 +111,12 @@ int readTar(char *path, char *filename)
             strcat(buf2, " ");
             strcat(buf2, permissions);
             strcat(buf2, " ");
-            strcat(buf2, userId);
+            strcat(buf2, username);
+            strcat(buf2, " ");
+            strcat(buf2, groupname);
             strcat(buf2, " ");
             strcat(buf2, fileSize);
-            strcat(buf2, "     \t ");
+            strcat(buf2, "      \t ");
             strcat(buf2, fileAddress);
             strcat(buf2, "\n");        
         }
@@ -119,7 +128,8 @@ int readTar(char *path, char *filename)
     /* Se libera la memoria guardada con malloc */
     free(fileAddress);
     free(mode);
-    free(userId);
+    free(username);
+    free(groupname);
     free(fileSize);
 
     /* Se cierra archivo abierto */
@@ -207,6 +217,8 @@ void recursive_tree(char *basePath, char *filename,const int root, int n, int v)
 
     /* Inicializan variables para poder conocer informacion del archivo */
     struct stat st;
+    struct passwd *pws;
+    struct group *grp;
     mode_t mode;
 
     /* Se crea variable que contendra el archivo a empaquetar */
@@ -246,12 +258,14 @@ void recursive_tree(char *basePath, char *filename,const int root, int n, int v)
             sprintf(buff, "%i", st.st_mode);
             addHeader(buff, filename);
 
-            /* Agrega el id de usuario dueño */
-            sprintf(buff, "%i", st.st_uid);
+            /* Agrega el username del dueño del archivo */
+            pws = getpwuid(st.st_uid);
+            sprintf(buff, "%s", pws->pw_name);
             addHeader(buff, filename);
 
             /* Agrega el id del grupo dueño */
-            sprintf(buff, "%i", st.st_gid);
+            grp = getgrgid(st.st_gid);
+            sprintf(buff, "%s", grp->gr_name);
             addHeader(buff, filename);
 
             /* Agrega el numero de bloques de 512 bytes guardados en memoria */
@@ -298,20 +312,6 @@ void recursive_tree(char *basePath, char *filename,const int root, int n, int v)
             /* Mientras el directorio no sea el base, realiza unas actividades especiales para una correcta impresion */
             if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0)
             {
-                for (i = 0; i < root; i++)
-                {
-                    if (i % 2 == 0 || i == 0)
-                    {
-                        /* Identificador de que entra en una carpeta */
-                        /*printf("|");*/
-                    }
-                    else
-                    {
-                        /* Espaciado para mejor identificacion */
-                        /*printf(" ");*/
-                    }
-                }
-
                 /* Imprime en pantalla el nombre del archivo actual */
                 if (v)
                 {
