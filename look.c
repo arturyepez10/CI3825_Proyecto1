@@ -21,7 +21,7 @@
 * return: 
 */
 
-int readTar(char *path, char *filename)
+int packedInfo(char *path, char *filename)
 {
     /* Inicializado archivo que se leera */
     FILE *fichero;
