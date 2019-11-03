@@ -3,28 +3,41 @@
 #include "encrypted.h"
 #include <stdbool.h>
 #include "look.h"
+#include <string.h>
 
 int main(int argc, char *argv[])
-{  
+{
     /* Se inicializa fichero que se usara para crear el archivo a empaquetar*/
-    FILE *fichero;
+    char newPath[300];
+    char buf[10];
+    char buf2[10];
 
-    /* Variable que contiene nombre de  */
-    char filename[100];
+    /* Manipula los argumentos y asigna valores correspondientes */
+    strcpy(buf, " ");
+    buf[0] = argv[1][0];
+    
+    strcpy(buf2, " ");
+    buf2[0] = argv[1][1];
 
-    /* Recupera la respuesta del usuario */
-    printf( "Enter a value: ");
-    scanf("%s", filename);
+    if (strcmp(buf2, "/") != 0 && strcmp(buf2, ".") != 0 && strcmp(buf, "/") != 0)
+    {
+        strcpy(newPath, "./");
+        strcat(newPath, argv[1]);
+    }
 
-    printf( "\nYou entered: %s \n", filename);
+    else if (strcmp(buf, "/") == 0)
+    {
+        strcpy(newPath, argv[1]);
+    }
+    else if (strcmp(buf, ".") == 0 && strcmp(buf2, "/") == 0)
+    {
+        strcpy(newPath, argv[1]);
+    }
 
-    /* Abre y crea el archivo */
-    fichero = fopen(filename, "w+");
-    fclose(fichero);
+    printf("%s \n", newPath);
 
-    /* Empaqueta el archivo */
-    recursive_tree(".", filename, 1, 0, 1);
+    recursive_tree(".", newPath, 1, 0, 1);
 
-    readTar(".", filename);
+    /* readTar(".", newPath); */
     return 0;
 }
