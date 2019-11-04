@@ -8,17 +8,19 @@
 #include <stdlib.h>
 
 /*
-* Funcion:
+* Funcion: PACKEDINFO
 * --------------------------
-* 
+* Es la funcion que esta encargada de revisar un archivo empaquetado, recorre toda la informacion
+  dentro del archivo y la va desplegando en el terminal de forma ordenada. Entre la informacion que despliega
+  se encuentra: tipo de archivo, permisologia, si es un link, el size en bytes, el nombre del dueño y el nombre
+  de su grupo y por ultimo la direccion relativa dentro del empaquetado en conjunto con el nombre el archivo.
  
-* basePath: 
-* root:
+* filename: Es el nombre del archivo empaquetado.
 
-* return: 
+* return: un int que hara referencia a su codigo de error.
 */
 
-int packedInfo(char *path, char *filename)
+int packedInfo(char *filename)
 {
     /* Inicializado archivo que se leera */
     FILE *fichero;
