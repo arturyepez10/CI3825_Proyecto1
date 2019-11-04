@@ -49,6 +49,11 @@ int packedInfo(char *path, char *filename)
 
     /* Abierto archivo empaquetado */
     fichero = fopen(filename, "r");
+    if (fichero == NULL) 
+    {
+        printf("ERROR: No existe un archivo llamado %s\n", filename);
+        return 1;
+    }
 
     counter = 0;
 

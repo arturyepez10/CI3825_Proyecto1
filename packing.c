@@ -62,7 +62,7 @@ int addContent(FILE *data, char *filename)
 }
 
 /*
-* Funcion: recursiveTree
+* Funcion: packing
 * --------------------------
 * Encargada de hacer un recorrido por todo el arbol de directorio y de archivos, es decir,
   pasando por cada archivo/directorio dentro de una direccion en especifico.
