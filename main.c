@@ -35,6 +35,9 @@
 
 int main(int argc, char **argv)
 {
+    /* Inicializada variable para verificar si ya existe el archivo a empaquetar */
+    FILE *fichero;
+
     /* Se inicializan variables que se usara para crear el archivo a empaquetar */
     char newPathFile[300];
     char newPackingPathFile[300];
@@ -105,37 +108,31 @@ int main(int argc, char **argv)
         /* Caso para el flag f - Especifica el nombre del archivo mytar */
         case 'f':
             fvalue = optarg;
-            printf("outarg: '%s'\n", fvalue);
             break;
 
         /* Caso para el flag o - Directorio donde ira la salida de una extraccion */
         case 'o':
             ovalue = optarg;
-            printf("outarg: '%s'\n", optarg);
             break;
 
         /* Caso para el flag z - Cifra el contenido del archivo */
         case 'z':
             zvalue = optarg;
-            printf("outarg: '%s'\n", optarg);
             break;
 
         /* Caso para el flag y - Descifra el contenido del archivo */
         case 'y':
             yvalue = optarg;
-            printf("outarg: '%s'\n", optarg);
             break;
 
         /* Caso para el flag x - Extrae todos los archivos */
         case 'x':
             xvalue = optarg;
-            printf("outarg: '%s'\n", optarg);
             break;
 
         /* Caso para el flag s - Extrae el archivo en caso de existir */
         case 's':
             svalue = optarg;
-            printf("outarg: '%s'\n", optarg);
             break;
 
         /* Cuando no es un caso atipico */
@@ -265,18 +262,25 @@ int main(int argc, char **argv)
         {
             strcpy(newPackingPathFile, ".");
         }
+
+        /* Se abre el archivo fichero para verificar si existe */
+        fichero = fopen(newPathFile, "r");
         
         /* SEGUN LA MEZCLA CON OTROS FLAGS */
         if (cflag != 0)
         {   
+            /* Verifica que el archivo que se desea empaquetar no exista, y si existe lo sobreescribe */
+            if (fichero != NULL) {
+                fichero = fopen(newPathFile, "w+");
+            }
+
+            /* Empaqueta el archivo/directorio en cuestion sin especificar por terminal que se realiza */
             packing(newPackingPathFile, newPathFile, 1, 0, vflag); 
         }
-        else if(cflag != 0 && vflag != 0) 
-        {
-            packing(newPackingPathFile, newPathFile, 1, 0, vflag); 
-        } 
+        
         else if (tflag != 0)
         {   
+            /* */
             packedInfo(newPathFile);
         }
     }
