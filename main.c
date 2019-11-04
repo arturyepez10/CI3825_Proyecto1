@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
 
     packing(".", newPath, 1, 0, 1);
 
-    /*packedInfo(".", newPath);*/
+    /*packedInfo(newPath);*/
 
     return 0;
 }
