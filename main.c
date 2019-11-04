@@ -274,7 +274,7 @@ int main(int argc, char **argv)
         } 
         else if (tflag != 0)
         {   
-            packedInfo(".", newPathFile);
+            packedInfo(newPathFile);
         }
     }
 
