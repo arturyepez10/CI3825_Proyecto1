@@ -10,6 +10,9 @@
 #include <pwd.h>
 #include <grp.h>
 
+#define MAX1 100000
+#define MAX2 255
+
 /*
 * Funcion:
 * --------------------------
@@ -80,9 +83,9 @@ void packing(char *basePath, char *filename, const int root, int n, int v)
 {
     /* Se encarga de inicializar las variables que usaremos en el recorrido */
     int i;
-    char path[1000];
-    char str[255];
-    char buff[10000];
+    char path[MAX1];
+    char str[MAX2];
+    char buff[MAX1];
 
     /* Crea un struct dirent que contiene informacion del directorio */
     struct dirent *dp;

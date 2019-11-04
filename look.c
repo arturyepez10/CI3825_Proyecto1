@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <stdlib.h>
+#define MAX1 100000
 
 /*
 * Funcion:
@@ -24,8 +25,8 @@ int packedInfo(char *filename)
     FILE *fichero;
 
     /* Variables de buffer */
-    char buf[10000];
-    char buf2[10000];
+    char buf[MAX1];
+    char buf2[MAX1];
 
     /* Se inicializan variables que tendran la informacion del archivo */
     char *fileAddress;

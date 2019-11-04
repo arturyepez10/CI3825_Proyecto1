@@ -10,6 +10,8 @@
 #include <fcntl.h>
 #define _POSIX_SOURCE
 
+#define MAX1 100000
+
 /*
 * Funcion:
 * --------------------------
@@ -29,8 +31,8 @@ int unpacking(char *filename)
     int data1;
 
     /* Variables de buffer */
-    char buf[10000];
-    char buf2[10000];
+    char buf[MAX1];
+    char buf2[MAX1];
 
     /* Se inicializan variables que tendran la informacion del archivo */
     char *fileAddress;

@@ -7,12 +7,15 @@
 #include "unpacking.h"
 #include <string.h>
 
+#define MAX2 300
+#define MAX3 100
+
 int main(int argc, char *argv[])
 {
     /* Se inicializa fichero que se usara para crear el archivo a empaquetar*/
-    char newPath[300];
-    char buf[10];
-    char buf2[10];
+    char newPath[MAX2];
+    char buf[MAX3];
+    char buf2[MAX3];
 
     /* Manipula los argumentos y asigna valores correspondientes */
     strcpy(buf, " ");
