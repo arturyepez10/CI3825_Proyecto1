@@ -18,6 +18,10 @@
 #include "look.h"
 #include "packing.h"
 
+/* DEFINE CONSTANTES POR PREPROCESADOR */
+#define MAX2 300
+#define MAX3 100
+
 /*
 * Funcion: MAIN
 * --------------------------
@@ -39,12 +43,12 @@ int main(int argc, char **argv)
     FILE *fichero;
 
     /* Se inicializan variables que se usara para crear el archivo a empaquetar */
-    char newPathFile[300];
-    char newPackingPathFile[300];
-    char buf[10];
-    char buf2[10];
-    char buf3[10];
-    char buf4[10];
+    char newPathFile[MAX2];
+    char newPackingPathFile[MAX2];
+    char buf[MAX3];
+    char buf2[MAX3];
+    char buf3[MAX3];
+    char buf4[MAX3];
 
     /* Inicializamos las variables que contendran la respuesta a si el flag
     fue invocado */

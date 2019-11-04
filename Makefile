@@ -1,5 +1,5 @@
-mytar: main.o encrypted.o look.o packing.o
-	gcc main.o encrypted.o look.o packing.o -o mytar
+mytar: main.o encrypted.o look.o packing.o unpacking.o
+	gcc main.o encrypted.o look.o packing.o unpacking.o -o mytar
 
 main.o: main.c
 	gcc -c main.c -ansi -Wpedantic -o main.o
@@ -12,3 +12,6 @@ look.o: look.c look.h
 
 packing.o: packing.c packing.h
 	gcc -c packing.c -ansi -Wpedantic -o packing.o
+
+unpacking.o: unpacking.c unpacking.h
+	gcc -c unpacking.c -ansi -Wpedantic -o unpacking.o

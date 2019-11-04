@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <stdlib.h>
+#define MAX1 100000
 
 /*
 * Funcion: PACKEDINFO
@@ -26,8 +27,8 @@ int packedInfo(char *filename)
     FILE *fichero;
 
     /* Variables de buffer */
-    char buf[10000];
-    char buf2[10000];
+    char buf[MAX1];
+    char buf2[MAX1];
 
     /* Se inicializan variables que tendran la informacion del archivo */
     char *fileAddress;
@@ -74,21 +75,21 @@ int packedInfo(char *filename)
             strcpy(fileAddress, buf);
 
             /* Copio la variable del mode y luego la pasa a entero*/
-            fscanf(fichero, "%s", buf);     
+            fscanf(fichero, "%s", buf);
             strcpy(mode, buf);
             intMode = atoi(mode);
 
             /* Todos los datos de permisologia extraidos del mode los agrega a la variable de permisos */
-            strcpy(permissions ,(S_ISDIR(intMode)) ? "d" : "-");
-            strcat(permissions ,(intMode & S_IRUSR) ? "r" : "-");
-            strcat(permissions ,(intMode & S_IWUSR) ? "w" : "-");
-            strcat(permissions ,(intMode & S_IXUSR) ? "x" : "-");
-            strcat(permissions ,(intMode & S_IRGRP) ? "r" : "-");
-            strcat(permissions ,(intMode & S_IWGRP) ? "w" : "-");
-            strcat(permissions ,(intMode & S_IXGRP) ? "x" : "-");
-            strcat(permissions ,(intMode & S_IROTH) ? "r" : "-");
-            strcat(permissions ,(intMode & S_IWOTH) ? "w" : "-");
-            strcat(permissions ,(intMode & S_IXOTH) ? "x" : "-");
+            strcpy(permissions, (S_ISDIR(intMode)) ? "d" : "-");
+            strcat(permissions, (intMode & S_IRUSR) ? "r" : "-");
+            strcat(permissions, (intMode & S_IWUSR) ? "w" : "-");
+            strcat(permissions, (intMode & S_IXUSR) ? "x" : "-");
+            strcat(permissions, (intMode & S_IRGRP) ? "r" : "-");
+            strcat(permissions, (intMode & S_IWGRP) ? "w" : "-");
+            strcat(permissions, (intMode & S_IXGRP) ? "x" : "-");
+            strcat(permissions, (intMode & S_IROTH) ? "r" : "-");
+            strcat(permissions, (intMode & S_IWOTH) ? "w" : "-");
+            strcat(permissions, (intMode & S_IXOTH) ? "x" : "-");
 
             /* Verifica si el archivo es un link simbolico */
             strcat(permissions, " ");
@@ -102,9 +103,9 @@ int packedInfo(char *filename)
             fscanf(fichero, "%s", buf);
             strcpy(groupname, buf);
 
-            /* Copio el tamaño del archivo */ 
-            fscanf(fichero, "%s", buf); 
-            fscanf(fichero, "%s", buf); 
+            /* Copio el tamaño del archivo */
+            fscanf(fichero, "%s", buf);
+            fscanf(fichero, "%s", buf);
             strcpy(fileSize, buf);
             counter += atoi(fileSize);
 
@@ -119,7 +120,7 @@ int packedInfo(char *filename)
             strcat(buf2, fileSize);
             strcat(buf2, "      \t ");
             strcat(buf2, fileAddress);
-            strcat(buf2, "\n");        
+            strcat(buf2, "\n");
         }
         /* Imprime todo el buffer2 antes de reiniciar el ciclo */
         printf("%s", buf2);
