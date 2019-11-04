@@ -1,0 +1,824 @@
+STARTHEADER
+.
+16893
+samuel
+samuel
+8
+4096
+ENDHEADER
+STARTHEADER
+./packing.c
+33204
+samuel
+samuel
+16
+8183
+ENDHEADER
+STARTPROGRAM
+
+/* LIBRERIAS DEL SISTEMA QUE UTILIZA PACKING.C */
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <pwd.h>
+#include <grp.h>
+
+/*
+* Funcion:
+* --------------------------
+* 
+ 
+* basePath: 
+* root:
+
+* return: 
+*/
+
+int addHeader(char *data, char *filename)
+{
+    FILE *fichero;
+    fichero = fopen(filename, "a");
+    fputs(data, fichero);
+    fputs("\n", fichero);
+    fclose(fichero);
+    return 0;
+}
+
+/*
+* Funcion:
+* --------------------------
+* 
+ 
+* basePath: 
+* root:
+
+* return: 
+*/
+
+int addContent(FILE *data, char *filename)
+{
+    FILE *fichero;
+    int data1;
+    fichero = fopen(filename, "a");
+    data1 = 0;
+    if (data != NULL)
+    {
+        while ((data1 = fgetc(data)) != EOF)
+        {
+            fputc(data1, fichero);
+        }
+    }
+    fputs("\n", fichero);
+    fclose(data);
+    fclose(fichero);
+    return 0;
+}
+
+/*
+* Funcion: recursiveTree
+* --------------------------
+* Encargada de hacer un recorrido por todo el arbol de directorio y de archivos, es decir,
+  pasando por cada archivo/directorio dentro de una direccion en especifico.
+ 
+* basePath: La direccion base por la que comenzara el recorrido del arbol
+* filename
+* root: Un entero que representa el nivel del arbol.
+* n: Es el identificador del flag n
+* v: Es el identificador del flag v
+
+* return: nada.
+*/
+
+void packing(char *basePath, char *filename, const int root, int n, int v)
+{
+    /* Se encarga de inicializar las variables que usaremos en el recorrido */
+    int i;
+    char path[1000];
+    char str[255];
+    char buff[10000];
+
+    /* Crea un struct dirent que contiene informacion del directorio */
+    struct dirent *dp;
+
+    /* Inicializan variables para poder conocer informacion del archivo */
+    struct stat st;
+    struct passwd *pws;
+    struct group *grp;
+    mode_t mode;
+
+    /* Se crea variable que contendra el archivo a empaquetar */
+    FILE *fichero;
+
+    /* Inicializa directorios a recorrer */
+    DIR *dir;
+
+    /* Abre lo que se encuentre en la direccion que se pasa por argumento */
+    fichero = fopen(basePath, "r");
+    if (fichero != NULL)
+    {
+        /* Consigue el stat de lo que pasamos como argumento y lo linkea a nuestra variable personal creada para el caso */
+        stat(basePath, &st);
+
+        /* Encuentra el mode, para verificar que tipo de archivo tenemos a la mano */
+        mode = st.st_mode;
+
+        if (S_ISDIR(mode))
+        {
+            /* Si es directorio */
+            strcpy(str, basePath);
+
+            /* Comienza el copiado del header en el archivo a empaquetar */
+            addHeader("STARTHEADER", filename);
+
+            /* Agrega direccion relativa del archivo o directorio */
+            addHeader(str, filename);
+
+            /* Agrega el modo del archivo */
+            sprintf(buff, "%i", st.st_mode);
+            addHeader(buff, filename);
+
+            /* Agrega el username del dueÃ±o del archivo */
+            pws = getpwuid(st.st_uid);
+            sprintf(buff, "%s", pws->pw_name);
+            addHeader(buff, filename);
+
+            /* Agrega el id del grupo dueÃ±o */
+            grp = getgrgid(st.st_gid);
+            sprintf(buff, "%s", grp->gr_name);
+            addHeader(buff, filename);
+
+            /* Agrega el numero de bloques de 512 bytes guardados en memoria */
+            sprintf(buff, "%li", st.st_blocks);
+            addHeader(buff, filename);
+
+            /* Agrega el tamaÃ±o del archivo en bytes */
+            sprintf(buff, "%li", st.st_size);
+            addHeader(buff, filename);
+            addHeader("ENDHEADER", filename);
+        }
+        else if (S_ISREG(mode) && strcmp(basePath, filename))
+        {
+            /* Si es archivo regular y si el archivo a empaquetar no es una version de si mismo */
+
+            /* Copia la direccion del path en un string */
+            strcpy(str, basePath);
+
+            /* Comienza el copiado del header en el archivo a empaquetar */
+            addHeader("STARTHEADER", filename);
+
+            /* Agrega direccion relativa del archivo o directorio */
+            addHeader(str, filename);
+
+            /* Agrega el modo del archivo */
+            sprintf(buff, "%i", st.st_mode);
+            addHeader(buff, filename);
+
+            /* Agrega el username del dueÃ±o del archivo */
+            pws = getpwuid(st.st_uid);
+            sprintf(buff, "%s", pws->pw_name);
+            addHeader(buff, filename);
+
+            /* Agrega el id del grupo dueÃ±o */
+            grp = getgrgid(st.st_gid);
+            sprintf(buff, "%s", grp->gr_name);
+            addHeader(buff, filename);
+
+            /* Agrega el numero de bloques de 512 bytes guardados en memoria */
+            sprintf(buff, "%li", st.st_blocks);
+            addHeader(buff, filename);
+
+            /* Agrega el tamaÃ±o del archivo en bytes */
+            sprintf(buff, "%li", st.st_size);
+            addHeader(buff, filename);
+            addHeader("ENDHEADER", filename);
+
+            /* Copia toda la data del archivo en el paquete */
+            addHeader("STARTPROGRAM", filename);
+            addContent(fichero, filename);
+            addHeader("ENDPROGRAM", filename);
+        }
+        else if (n && S_ISLNK(mode))
+        {
+            /* Si es link */
+            /* Copia la direccion del path en un string */
+            strcpy(str, basePath);
+
+            /* Comienza el copiado del header en el archivo a empaquetar */
+            addHeader("STARTHEADER", filename);
+
+            /* Agrega direccion relativa del archivo o directorio */
+            addHeader(str, filename);
+
+            /* Agrega el modo del archivo */
+            sprintf(buff, "%i", st.st_mode);
+            addHeader(buff, filename);
+
+            /* Agrega el username del dueÃ±o del archivo */
+            pws = getpwuid(st.st_uid);
+            sprintf(buff, "%s", pws->pw_name);
+            addHeader(buff, filename);
+
+            /* Agrega el id del grupo dueÃ±o */
+            grp = getgrgid(st.st_gid);
+            sprintf(buff, "%s", grp->gr_name);
+            addHeader(buff, filename);
+
+            /* Agrega el numero de bloques de 512 bytes guardados en memoria */
+            sprintf(buff, "%li", st.st_blocks);
+            addHeader(buff, filename);
+
+            /* Agrega el tamaÃ±o del archivo en bytes */
+            sprintf(buff, "%li", st.st_size);
+            addHeader(buff, filename);
+            addHeader("ENDHEADER", filename);
+
+            /* Copia toda la data del archivo en el paquete */
+            addHeader("STARTPROGRAM", filename);
+            addContent(fichero, filename);
+            addHeader("ENDPROGRAM", filename);
+        }
+        else if (n && (S_ISBLK(mode) || S_ISCHR(mode) || S_ISFIFO(mode) || S_ISLNK(mode)))
+        {
+        }
+        else if (fichero == NULL)
+        {
+            /* Si no existe ningun archivo o directorio con ese nombre */
+        }
+
+        fclose(fichero);
+
+        /* Abre el directorio con la direccion especifica */
+        dir = opendir(basePath);
+
+        /* Si no existe tal directorio entonces se sale de la funcion */
+        if (dir == NULL)
+        {
+            return;
+        }
+
+        /* Mientras existe un apuntador que devuelva readdir(), se seguira en el ciclo */
+        while ((dp = readdir(dir)) != NULL)
+        {
+            /* Mientras el directorio no sea el base, realiza unas actividades especiales para una correcta impresion */
+            if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0)
+            {
+                /* Imprime en pantalla el nombre del archivo actual */
+                if (v)
+                {
+                    printf("packing... %s \n", dp->d_name);
+                }
+
+                /* Copia hacia la variable path el nuevo directorio base */
+                strcpy(path, basePath);
+                strcat(path, "/");
+                strcat(path, dp->d_name);
+
+                /* LLamada recursiva hacia el nuevo directorio hijo, trasladando el root por 2 */
+                packing(path, filename, root + 2, n, v);
+            }
+        }
+        /* Cierra el actual directorio para liberar el espacio de memoria */
+        closedir(dir);
+    }
+}
+ENDPROGRAM
+STARTHEADER
+./packing.h
+33204
+samuel
+samuel
+8
+119
+ENDHEADER
+STARTPROGRAM
+#ifndef PACKING_h
+#define PACKING_h
+
+void packing(char *basePath, char *filename,const int root, int n, int v);
+
+#endif
+ENDPROGRAM
+STARTHEADER
+./mytar
+33277
+samuel
+samuel
+40
+17728
+ENDHEADER
+STARTPROGRAM
+ELF          >          @        >          @ 8 	 @         @       @       @       ø      ø                   8      8      8                                                         8"      8"                    -      -      -      ø                           (-      (-      (-      ð      ð                   T      T      T      D       D              Påtd   à      à      à      t       t              Qåtd                                                  Råtd   -      -      -      è      è             /lib64/ld-linux-x86-64.so.2          GNU                        GNU F¢‘’«9¿GV8—3í§d	nÇ                                                     ·                      Ú                                             f                      {                      (                      C                                            :                      `                      ƒ                      T                      1                      Z                      ¥                      ž                      ö                       ¼                                            m                      "                      Š                      t                                                                     "                    libc.so.6 strcpy readdir sprintf fopen getpwuid closedir getgrgid __stack_chk_fail fgetc fputc fputs fclose malloc strcat opendir fscanf atoi __cxa_finalize strcmp __libc_start_main free __xstat GLIBC_2.4 GLIBC_2.2.5 _ITM_deregisterTMCloneTable __gmon_start__ _ITM_registerTMCloneTable                                               ii   Ä      ui	   Î       -                    -             Ð      0             0      Ø/                    à/                    è/                    ð/                    ø/                    0/                    8/                    @/                    H/                    P/                    X/                    `/                    h/         	           p/         
+           x/                    €/                    ˆ/                    /                    ˜/                     /                    ¨/                    °/                    ¸/                    À/                    È/                    Ð/                    HƒìH‹]&  H…ÀtÿÐHƒÄÃ         ÿ5z%  ÿ%|%  @ ÿ%z%  h    éàÿÿÿÿ%r%  h   éÐÿÿÿÿ%j%  h   éÀÿÿÿÿ%b%  h   é°ÿÿÿÿ%Z%  h   é ÿÿÿÿ%R%  h   éÿÿÿÿ%J%  h   é€ÿÿÿÿ%B%  h   épÿÿÿÿ%:%  h   é`ÿÿÿÿ%2%  h	   éPÿÿÿÿ%*%  h
+   é@ÿÿÿÿ%"%  h   é0ÿÿÿÿ%%  h   é ÿÿÿÿ%%  h   éÿÿÿÿ%
+%  h   é ÿÿÿÿ%%  h   éðþÿÿÿ%ú$  h   éàþÿÿÿ%ò$  h   éÐþÿÿÿ%ê$  h   éÀþÿÿÿ%â$  h   é°þÿÿÿ%Ú$  h   é þÿÿÿ%ò$  f        1íI‰Ñ^H‰âHƒäðPTLê  Hs  H=æ   ÿ¦$  ôD  H=É$  UHÁ$  H9øH‰åtH‹z$  H…Àt]ÿàf.„     ]Ã@ f.„     H=‰$  H5‚$  UH)þH‰åHÁþH‰ðHÁè?HÆHÑþtH‹A$  H…Àt]ÿàf„     ]Ã@ f.„     €=9$   u/Hƒ=$   UH‰åtH‹=$  èÿÿÿèHÿÿÿÆ$  ]Ã€    óÃfD  UH‰å]éfÿÿÿUH‰åHìp  ‰½œþÿÿH‰µþÿÿdH‹%(   H‰Eø1ÀH…¬þÿÿfÇ   H‹…þÿÿHƒÀH‹ ¶ ˆ…¬þÿÿH…¶þÿÿfÇ   H‹…þÿÿHƒÀH‹ ¶@ˆ…¶þÿÿH…¶þÿÿH5®  H‰Çèâýÿÿ…ÀtiH…¶þÿÿH5–  H‰ÇèÈýÿÿ…ÀtOH…¬þÿÿH5z  H‰Çè®ýÿÿ…Àt5H…ÀþÿÿfÇ ./Æ@ H‹…þÿÿHƒÀH‹H…ÀþÿÿH‰ÖH‰ÇèÚýÿÿé   H…¬þÿÿH5+  H‰Çè_ýÿÿ…Àu"H‹…þÿÿHƒÀH‹H…ÀþÿÿH‰ÖH‰Çè{üÿÿëTH…¬þÿÿH5ñ  H‰Çè#ýÿÿ…Àu:H…¶þÿÿH5Õ  H‰Çè	ýÿÿ…Àu H‹…þÿÿHƒÀH‹H…ÀþÿÿH‰ÖH‰Çè%üÿÿH…ÀþÿÿH‰ÆH=œ  ¸    èZüÿÿH…ÀþÿÿA¸   ¹    º   H‰ÆH=o  èŠ  ¸    H‹MødH3%(   tèüÿÿÉÃUH‰å‰}ü‰uø‹Eø‹Uü‰Ö‰ÁÓæ¸    +Eø‹Uü‰ÁÓú‰Ð	ð]ÃUH‰å‰}ü‰uø‹Eø‹Uü‰Ö‰ÁÓþ¸    +Eø‹Uü‰ÁÓâ‰Ð	ð]ÃUH‰åHì€N  H‰½ˆ±ÿÿH‰µ€±ÿÿdH‹%(   H‰Eø1À¿d   è1üÿÿH‰…˜±ÿÿ¿d   è üÿÿH‰… ±ÿÿ¿d   èüÿÿH‰…¨±ÿÿ¿d   èþûÿÿH‰…°±ÿÿ¿d   èíûÿÿH‰…¸±ÿÿ¿d   èÜûÿÿH‰…À±ÿÿH‹…€±ÿÿH5g  H‰ÇèÏûÿÿH‰…È±ÿÿÇ…±ÿÿ    é»  Æ…àØÿÿ H…Ð±ÿÿH56  H‰Çè\ûÿÿ…À…{  H•Ð±ÿÿH‹…È±ÿÿH5  H‰Ç¸    èòúÿÿH•Ð±ÿÿH‹…˜±ÿÿH‰ÖH‰ÇèYúÿÿH•Ð±ÿÿH‹…È±ÿÿH5â  H‰Ç¸    è·úÿÿH•Ð±ÿÿH‹… ±ÿÿH‰ÖH‰ÇèúÿÿH‹… ±ÿÿH‰Çèûÿÿ‰…”±ÿÿ‹…”±ÿÿ% ð  = @  u	H‘  ëHŠ  H‹•¨±ÿÿH‰ÆH‰×èÕùÿÿ‹…”±ÿÿ%   …Àt	HO  ëHY  H‹•¨±ÿÿH‰ÆH‰×èÄúÿÿ‹…”±ÿÿ%€   …Àt	H3  ëH(  H‹•¨±ÿÿH‰ÆH‰×è“úÿÿ‹…”±ÿÿƒà@…Àt	H  ëHù  H‹•¨±ÿÿH‰ÆH‰×èdúÿÿ‹…”±ÿÿƒà …Àt	HÀ  ëHÊ  H‹•¨±ÿÿH‰ÆH‰×è5úÿÿ‹…”±ÿÿƒà…Àt	H¦  ëH›  H‹•¨±ÿÿH‰ÆH‰×èúÿÿ‹…”±ÿÿƒà…Àt	Hy  ëHl  H‹•¨±ÿÿH‰ÆH‰×è×ùÿÿ‹…”±ÿÿƒà…Àt	H3  ëH=  H‹•¨±ÿÿH‰ÆH‰×è¨ùÿÿ‹…”±ÿÿƒà…Àt	H  ëH  H‹•¨±ÿÿH‰ÆH‰×èyùÿÿ‹…”±ÿÿƒà…Àt	Hì  ëHß  H‹•¨±ÿÿH‰ÆH‰×èJùÿÿH‹…¨±ÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH‹…¨±ÿÿHÐfÇ   ‹…”±ÿÿ% ð  =    u	H†  ëHw  H‹•¨±ÿÿH‰ÆH‰×èâøÿÿH•Ð±ÿÿH‹…È±ÿÿH5K  H‰Ç¸    è øÿÿH•Ð±ÿÿH‹…°±ÿÿH‰ÖH‰Çè‡÷ÿÿH•Ð±ÿÿH‹…È±ÿÿH5  H‰Ç¸    èå÷ÿÿH•Ð±ÿÿH‹…¸±ÿÿH‰ÖH‰ÇèL÷ÿÿH•Ð±ÿÿH‹…È±ÿÿH5Õ  H‰Ç¸    èª÷ÿÿH•Ð±ÿÿH‹…È±ÿÿH5³  H‰Ç¸    èˆ÷ÿÿH•Ð±ÿÿH‹…À±ÿÿH‰ÖH‰ÇèïöÿÿH‹…À±ÿÿH‰Çèð÷ÿÿ…±ÿÿH…àØÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…àØÿÿHÐfÇ   H‹•¨±ÿÿH…àØÿÿH‰ÖH‰Çè­÷ÿÿH…àØÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…àØÿÿHÐfÇ   H‹•°±ÿÿH…àØÿÿH‰ÖH‰Çè`÷ÿÿH…àØÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…àØÿÿHÐfÇ   H‹•¸±ÿÿH…àØÿÿH‰ÖH‰Çè÷ÿÿH…àØÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…àØÿÿHÐfÇ   H‹•À±ÿÿH…àØÿÿH‰ÖH‰ÇèÆöÿÿH…àØÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…àØÿÿHÐH¾      	 H‰0Æ@ H‹•˜±ÿÿH…àØÿÿH‰ÖH‰ÇèmöÿÿH…àØÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…àØÿÿHÐfÇ 
+ H…àØÿÿH‰ÆH=¦
+  ¸    èNõÿÿH•Ð±ÿÿH‹…È±ÿÿH5‡
+  H‰Ç¸    è\õÿÿƒøÿ…úÿÿ‹…±ÿÿ‰ÆH=t
+  ¸    è
+õÿÿH‹…˜±ÿÿH‰Çè›ôÿÿH‹… ±ÿÿH‰ÇèŒôÿÿH‹…°±ÿÿH‰Çè}ôÿÿH‹…¸±ÿÿH‰ÇènôÿÿH‹…À±ÿÿH‰Çè_ôÿÿH‹…È±ÿÿH‰Çèpôÿÿ¸    H‹MødH3%(   tè‡ôÿÿÉÃUH‰åHƒì H‰}èH‰uàH‹EàH5ü	  H‰Çè"õÿÿH‰EøH‹UøH‹EèH‰ÖH‰Çè{ôÿÿH‹EøH‰Æ¿
+   èªôÿÿH‹EøH‰Çèþóÿÿ¸    ÉÃUH‰åHƒì H‰}èH‰uàH‹EàH5ž	  H‰ÇèÄôÿÿH‰EøÇEô    Hƒ}è t(ëH‹Uø‹EôH‰Ö‰ÇèOôÿÿH‹EèH‰Çè#ôÿÿ‰Eôƒ}ôÿuÚH‹EøH‰Æ¿
+   è)ôÿÿH‹EèH‰Çè}óÿÿH‹EøH‰Çèqóÿÿ¸    ÉÃUH‰åHìð,  H‰½(ÓÿÿH‰µ Óÿÿ‰•Óÿÿ‰ÓÿÿD‰…ÓÿÿdH‹%(   H‰Eø1ÀH‹…(ÓÿÿH5å  H‰Çè	ôÿÿH‰…8ÓÿÿHƒ½8Óÿÿ „¾  H•`ÓÿÿH‹…(ÓÿÿH‰ÖH‰Çè;  ‹…xÓÿÿ‰…4Óÿÿ‹…4Óÿÿ% ð  = @  …¥  H‹•(ÓÿÿH…ðÓÿÿH‰ÖH‰Çè òÿÿH‹… ÓÿÿH‰ÆH=e  èEþÿÿH‹• ÓÿÿH…ðÓÿÿH‰ÖH‰Çè,þÿÿ‹•xÓÿÿH…àØÿÿH5?  H‰Ç¸    è€óÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰Çèòýÿÿ‹…|Óÿÿ‰ÇèZòÿÿH‰…@ÓÿÿH‹…@ÓÿÿH‹H…àØÿÿH‰ÖH‰ÇèòÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰Çè©ýÿÿ‹…€Óÿÿ‰ÇèAòÿÿH‰…HÓÿÿH‹…HÓÿÿH‹H…àØÿÿH‰ÖH‰Çè¾ñÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰Çè`ýÿÿH‹• ÓÿÿH…àØÿÿH5u  H‰Ç¸    è³òÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰Çè%ýÿÿH‹•ÓÿÿH…àØÿÿH5:  H‰Ç¸    èxòÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰ÇèêüÿÿH‹… ÓÿÿH‰ÆH=  èÔüÿÿéh  ‹…4Óÿÿ% ð  = €  …  H‹• ÓÿÿH‹…(ÓÿÿH‰ÖH‰Çè¥ñÿÿ…À„ê  H‹•(ÓÿÿH…ðÓÿÿH‰ÖH‰ÇèÄðÿÿH‹… ÓÿÿH‰ÆH=‰  èiüÿÿH‹• ÓÿÿH…ðÓÿÿH‰ÖH‰ÇèPüÿÿ‹•xÓÿÿH…àØÿÿH5c  H‰Ç¸    è¤ñÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰Çèüÿÿ‹…|Óÿÿ‰Çè~ðÿÿH‰…@ÓÿÿH‹…@ÓÿÿH‹H…àØÿÿH‰ÖH‰Çè+ðÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰ÇèÍûÿÿ‹…€Óÿÿ‰ÇèeðÿÿH‰…HÓÿÿH‹…HÓÿÿH‹H…àØÿÿH‰ÖH‰ÇèâïÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰Çè„ûÿÿH‹• ÓÿÿH…àØÿÿH5™  H‰Ç¸    è×ðÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰ÇèIûÿÿH‹•ÓÿÿH…àØÿÿH5^  H‰Ç¸    èœðÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰ÇèûÿÿH‹… ÓÿÿH‰ÆH=+  èøúÿÿH‹… ÓÿÿH‰ÆH=  èâúÿÿH‹• ÓÿÿH‹…8ÓÿÿH‰ÖH‰Çè'ûÿÿH‹… ÓÿÿH‰ÆH=ý  è³úÿÿéG  ƒ½Óÿÿ „:  ‹…4Óÿÿ% ð  =    …ç  H‹•(ÓÿÿH…ðÓÿÿH‰ÖH‰Çè·îÿÿH‹… ÓÿÿH‰ÆH=|  è\úÿÿH‹• ÓÿÿH…ðÓÿÿH‰ÖH‰ÇèCúÿÿ‹•xÓÿÿH…àØÿÿH5V  H‰Ç¸    è—ïÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰Çè	úÿÿ‹…|Óÿÿ‰ÇèqîÿÿH‰…@ÓÿÿH‹…@ÓÿÿH‹H…àØÿÿH‰ÖH‰ÇèîÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰ÇèÀùÿÿ‹…€Óÿÿ‰ÇèXîÿÿH‰…HÓÿÿH‹…HÓÿÿH‹H…àØÿÿH‰ÖH‰ÇèÕíÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰ÇèwùÿÿH‹• ÓÿÿH…àØÿÿH5Œ  H‰Ç¸    èÊîÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰Çè<ùÿÿH‹•ÓÿÿH…àØÿÿH5Q  H‰Ç¸    èîÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰ÇèùÿÿH‹… ÓÿÿH‰ÆH=  èëøÿÿH‹… ÓÿÿH‰ÆH=  èÕøÿÿH‹• ÓÿÿH‹…8ÓÿÿH‰ÖH‰ÇèùÿÿH‹… ÓÿÿH‰ÆH=ð  è¦øÿÿë=ƒ½Óÿÿ t4‹…4Óÿÿ% ð  = `  t"‹…4Óÿÿ% ð  =    t‹…4Óÿÿ% ð  =   H‹…8ÓÿÿH‰Çè­ìÿÿH‹…(ÓÿÿH‰Çè®ìÿÿH‰…PÓÿÿHƒ½PÓÿÿ „B  é  H‹…XÓÿÿHƒÀH5m  H‰Çèíÿÿ…À„æ   H‹…XÓÿÿHƒÀH5M  H‰Çèøìÿÿ…À„Ä   ƒ½Óÿÿ tH‹…XÓÿÿHƒÀH‰ÆH="  ¸    èXìÿÿH‹•(ÓÿÿH…ðÔÿÿH‰ÖH‰ÇèïëÿÿH…ðÔÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…ðÔÿÿHÐfÇ / H‹…XÓÿÿHPH…ðÔÿÿH‰ÖH‰Çè¾ìÿÿ‹…Óÿÿx‹Óÿÿ‹•ÓÿÿH‹µ ÓÿÿH…ðÔÿÿA‰È‰Ñ‰úH‰ÇèøÿÿH‹…PÓÿÿH‰Çè=ìÿÿH‰…XÓÿÿHƒ½XÓÿÿ …ÔþÿÿH‹…PÓÿÿH‰ÇèÙëÿÿëH‹EødH3%(   tèbëÿÿÉÃAWAVI‰×AUATL%f  UH-f  SA‰ýI‰öL)åHƒìHÁýè¯êÿÿH…ít 1Û„     L‰úL‰öD‰ïAÿÜHƒÃH9ÝuêHƒÄ[]A\A]A^A_Ãf.„     óÃf.„     @ H‰òH‰þ¿   é`ëÿÿHƒìHƒÄÃ         / . %s 
+    r STARTHEADER %s d - w x l      
+Total bytes of files packed: %i
+ a r STARTHEADER %i %li ENDHEADER STARTPROGRAM ENDPROGRAM . .. packing... %s 
+ ;t      ÀéÿÿÀ    ëÿÿè   0ëÿÿ   :ìÿÿ   îÿÿ   Bîÿÿ@  mîÿÿ`  ›õÿÿ€  ùõÿÿ   †öÿÿÀ  Àþÿÿà  0ÿÿÿ(  @ÿÿÿ@             zR x      ˜êÿÿ+                  zR x  $      øèÿÿ`   FJw€ ?;*3$"       D   0êÿÿ              \   2ëÿÿÝ   A†CØ    |   ïìÿÿ+    A†Cf      œ   úìÿÿ+    A†Cf      ¼   íÿÿ.   A†C)    Ü   ôÿÿ^    A†CY     ü   Qôÿÿ    A†Cˆ       ¾ôÿÿ:   A†C5 D   <  Øüÿÿe    BBŽE B(ŒH0†H8ƒM@r8A0A(B BBB    „   ýÿÿ              œ  øüÿÿ                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 Ð                           €	             0             -                            -                    õþÿo    ˜             @             ¸      
+                                                 /             ø                           ˆ             È             À       	                            ûÿÿo          þÿÿo    ˜      ÿÿÿo           ðÿÿo    `      ùÿÿo                                                                                           (-                      ¶	      Æ	      Ö	      æ	      ö	      
+      
+      &
+      6
+      F
+      V
+      f
+      v
+      †
+      –
+      ¦
+      ¶
+      Æ
+      Ö
+      æ
+      ö
+                                                      0      GCC: (Ubuntu 7.4.0-1ubuntu1~18.04.1) 7.4.0                                    8                    T                    t                    ˜                    ¸                    @                    `                    ˜                   	 È                   
+ ˆ                    €	                     	                                                             0                    @                    à                    X                     -                     -                    (-                    /                     0                    0                                        ñÿ                     @                   €              !     Ð              7     0             F      -              m                   y     -              ˜    ñÿ                Ÿ    ñÿ                «    ñÿ                ²    ñÿ                    ñÿ                ¼     4"                   ñÿ                2                  Ê       -              Û     (-              ä      -              ÷      à              
+    /                                0                 7                     I    Ù             T                      ¬      0              p                     „    M      .          0              –                     ª                     ¿                     *    0              Õ                     œ                     ñ                         ÷      +                            )                     =                     P                     f    f      :      n                                               {      ^       ª     0              ·                     Ë                      Ú   0              ç    @             ö                                                      e       0                     Ö     0              D    "      +       °          +       Q    0              ]          Ý      b                     u                     ‡                     ›                     °   0              ¼                      Ö  "                   *    €	               crtstuff.c deregister_tm_clones __do_global_dtors_aux completed.7697 __do_global_dtors_aux_fini_array_entry frame_dummy __frame_dummy_init_array_entry main.c encrypted.c look.c packing.c __FRAME_END__ __init_array_end _DYNAMIC __init_array_start __GNU_EH_FRAME_HDR _GLOBAL_OFFSET_TABLE_ __libc_csu_fini __stat free@@GLIBC_2.2.5 addContent _ITM_deregisterTMCloneTable strcpy@@GLIBC_2.2.5 packedInfo _edata fclose@@GLIBC_2.2.5 opendir@@GLIBC_2.2.5 getpwuid@@GLIBC_2.2.5 __stack_chk_fail@@GLIBC_2.4 getgrgid@@GLIBC_2.2.5 rotarIzquierda fputs@@GLIBC_2.2.5 fscanf@@GLIBC_2.2.5 fgetc@@GLIBC_2.2.5 closedir@@GLIBC_2.2.5 packing fputc@@GLIBC_2.2.5 __libc_start_main@@GLIBC_2.2.5 addHeader __data_start strcmp@@GLIBC_2.2.5 __gmon_start__ __dso_handle _IO_stdin_used __xstat@@GLIBC_2.2.5 readdir@@GLIBC_2.2.5 __libc_csu_init malloc@@GLIBC_2.2.5 rotarDerecha __bss_start main fopen@@GLIBC_2.2.5 atoi@@GLIBC_2.2.5 strcat@@GLIBC_2.2.5 sprintf@@GLIBC_2.2.5 __TMC_END__ _ITM_registerTMCloneTable __cxa_finalize@@GLIBC_2.2.5  .symtab .strtab .shstrtab .interp .note.ABI-tag .note.gnu.build-id .gnu.hash .dynsym .dynstr .gnu.version .gnu.version_r .rela.dyn .rela.plt .init .plt.got .text .fini .rodata .eh_frame_hdr .eh_frame .init_array .fini_array .dynamic .data .bss .comment                                                                              8      8                                    #             T      T                                     1             t      t      $                              D   öÿÿo       ˜      ˜                                   N             ¸      ¸      ˆ                          V             @      @                                   ^   ÿÿÿo       `      `      6                            k   þÿÿo       ˜      ˜      0                            z             È      È      À                            „      B       ˆ      ˆ      ø                          Ž             €	      €	                                    ‰              	       	      `                            ”                                                                                                               £             0      0      	                              ©             @      @                                     ±             à      à      t                              ¿             X       X       à                             É             -      -                                   Õ              -       -                                   á             (-      (-      ð                           ˜             /      /      è                             ê              0       0                                    ð             0      0                                    õ      0               0      +                                                   @0      Ð         /                 	                      9      ò                                                   =      þ                              
+ENDPROGRAM
+STARTHEADER
+./encrypted.o
+33204
+samuel
+samuel
+8
+1416
+ENDHEADER
+STARTPROGRAM
+ELF          >                    È          @     @  
+ UH‰å‰}ü‰uø‹Eø‹Uü‰Ö‰ÁÓæ¸    +Eø‹Uü‰ÁÓú‰Ð	ð]ÃUH‰å‰}ü‰uø‹Eø‹Uü‰Ö‰ÁÓþ¸    +Eø‹Uü‰ÁÓâ‰Ð	ð]Ã GCC: (Ubuntu 7.4.0-1ubuntu1~18.04.1) 7.4.0              zR x            +    A†Cf      <       +    A†Cf                               ñÿ                                                                                                                                                                 +            +       +        encrypted.c rotarIzquierda rotarDerecha                              @             +        .symtab .strtab .shstrtab .text .data .bss .comment .note.GNU-stack .rela.eh_frame                                                                                          @       V                              !                     –                                      '                     –                                      ,      0               –       ,                             5                      Â                                      J                     È       X                              E      @               @      0                                                        ð       	                    	                            )                                                    p      T                              
+ENDPROGRAM
+STARTHEADER
+./look.o
+33204
+samuel
+samuel
+16
+5608
+ENDHEADER
+STARTPROGRAM
+ELF          >                    ¨          @     @   UH‰åHì€N  H‰½ˆ±ÿÿH‰µ€±ÿÿdH‹%(   H‰Eø1À¿d   è    H‰…˜±ÿÿ¿d   è    H‰… ±ÿÿ¿d   è    H‰…¨±ÿÿ¿d   è    H‰…°±ÿÿ¿d   è    H‰…¸±ÿÿ¿d   è    H‰…À±ÿÿH‹…€±ÿÿH5    H‰Çè    H‰…È±ÿÿÇ…±ÿÿ    é»  Æ…àØÿÿ H…Ð±ÿÿH5    H‰Çè    …À…{  H•Ð±ÿÿH‹…È±ÿÿH5    H‰Ç¸    è    H•Ð±ÿÿH‹…˜±ÿÿH‰ÖH‰Çè    H•Ð±ÿÿH‹…È±ÿÿH5    H‰Ç¸    è    H•Ð±ÿÿH‹… ±ÿÿH‰ÖH‰Çè    H‹… ±ÿÿH‰Çè    ‰…”±ÿÿ‹…”±ÿÿ% ð  = @  u	H    ëH    H‹•¨±ÿÿH‰ÆH‰×è    ‹…”±ÿÿ%   …Àt	H    ëH    H‹•¨±ÿÿH‰ÆH‰×è    ‹…”±ÿÿ%€   …Àt	H    ëH    H‹•¨±ÿÿH‰ÆH‰×è    ‹…”±ÿÿƒà@…Àt	H    ëH    H‹•¨±ÿÿH‰ÆH‰×è    ‹…”±ÿÿƒà …Àt	H    ëH    H‹•¨±ÿÿH‰ÆH‰×è    ‹…”±ÿÿƒà…Àt	H    ëH    H‹•¨±ÿÿH‰ÆH‰×è    ‹…”±ÿÿƒà…Àt	H    ëH    H‹•¨±ÿÿH‰ÆH‰×è    ‹…”±ÿÿƒà…Àt	H    ëH    H‹•¨±ÿÿH‰ÆH‰×è    ‹…”±ÿÿƒà…Àt	H    ëH    H‹•¨±ÿÿH‰ÆH‰×è    ‹…”±ÿÿƒà…Àt	H    ëH    H‹•¨±ÿÿH‰ÆH‰×è    H‹…¨±ÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH‹…¨±ÿÿHÐfÇ   ‹…”±ÿÿ% ð  =    u	H    ëH    H‹•¨±ÿÿH‰ÆH‰×è    H•Ð±ÿÿH‹…È±ÿÿH5    H‰Ç¸    è    H•Ð±ÿÿH‹…°±ÿÿH‰ÖH‰Çè    H•Ð±ÿÿH‹…È±ÿÿH5    H‰Ç¸    è    H•Ð±ÿÿH‹…¸±ÿÿH‰ÖH‰Çè    H•Ð±ÿÿH‹…È±ÿÿH5    H‰Ç¸    è    H•Ð±ÿÿH‹…È±ÿÿH5    H‰Ç¸    è    H•Ð±ÿÿH‹…À±ÿÿH‰ÖH‰Çè    H‹…À±ÿÿH‰Çè    …±ÿÿH…àØÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…àØÿÿHÐfÇ   H‹•¨±ÿÿH…àØÿÿH‰ÖH‰Çè    H…àØÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…àØÿÿHÐfÇ   H‹•°±ÿÿH…àØÿÿH‰ÖH‰Çè    H…àØÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…àØÿÿHÐfÇ   H‹•¸±ÿÿH…àØÿÿH‰ÖH‰Çè    H…àØÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…àØÿÿHÐfÇ   H‹•À±ÿÿH…àØÿÿH‰ÖH‰Çè    H…àØÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…àØÿÿHÐH¾      	 H‰0Æ@ H‹•˜±ÿÿH…àØÿÿH‰ÖH‰Çè    H…àØÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…àØÿÿHÐfÇ 
+ H…àØÿÿH‰ÆH=    ¸    è    H•Ð±ÿÿH‹…È±ÿÿH5    H‰Ç¸    è    ƒøÿ…úÿÿ‹…±ÿÿ‰ÆH=    ¸    è    H‹…˜±ÿÿH‰Çè    H‹… ±ÿÿH‰Çè    H‹…°±ÿÿH‰Çè    H‹…¸±ÿÿH‰Çè    H‹…À±ÿÿH‰Çè    H‹…È±ÿÿH‰Çè    ¸    H‹MødH3%(   tè    ÉÃ  r STARTHEADER %s d - w x l      
+Total bytes of files packed: %i
+  GCC: (Ubuntu 7.4.0-1ubuntu1~18.04.1) 7.4.0          zR x            .   A†C)                             ñÿ                                                                                                                                                                                       .                            )                      0                      6                      =                      D                      K                      P                      W                      ^                      c                      j                       look.c packedInfo _GLOBAL_OFFSET_TABLE_ malloc fopen strcmp fscanf strcpy atoi strcat printf free fclose __stack_chk_fail      .             üÿÿÿÿÿÿÿ?             üÿÿÿÿÿÿÿP             üÿÿÿÿÿÿÿa             üÿÿÿÿÿÿÿr             üÿÿÿÿÿÿÿƒ             üÿÿÿÿÿÿÿ˜             üÿÿÿÿÿÿÿ              üÿÿÿÿÿÿÿË             þÿÿÿÿÿÿÿÓ             üÿÿÿÿÿÿÿð             
+       ý             üÿÿÿÿÿÿÿ            üÿÿÿÿÿÿÿ+            
+       8            üÿÿÿÿÿÿÿQ            üÿÿÿÿÿÿÿ`            üÿÿÿÿÿÿÿ                   ˆ                   š            üÿÿÿÿÿÿÿ°            üÿÿÿÿÿÿÿ¹                   Ë            üÿÿÿÿÿÿÿá                   ê                   ü            üÿÿÿÿÿÿÿ                                      +            üÿÿÿÿÿÿÿ?            üÿÿÿÿÿÿÿH                   Z            üÿÿÿÿÿÿÿn                   w                   ‰            üÿÿÿÿÿÿÿ                   ¦                   ¸            üÿÿÿÿÿÿÿÌ            üÿÿÿÿÿÿÿÕ                   ç            üÿÿÿÿÿÿÿû                                                  üÿÿÿÿÿÿÿ*                   3                   E            üÿÿÿÿÿÿÿ’                   ›                   ­            üÿÿÿÿÿÿÿÂ            
+       Ï            üÿÿÿÿÿÿÿè            üÿÿÿÿÿÿÿý            
+       
+            üÿÿÿÿÿÿÿ#            üÿÿÿÿÿÿÿ8            
+       E            üÿÿÿÿÿÿÿZ            
+       g            üÿÿÿÿÿÿÿ€            üÿÿÿÿÿÿÿ            üÿÿÿÿÿÿÿâ            üÿÿÿÿÿÿÿ/            üÿÿÿÿÿÿÿ|            üÿÿÿÿÿÿÿÉ            üÿÿÿÿÿÿÿ"            üÿÿÿÿÿÿÿg            
+       q            üÿÿÿÿÿÿÿ†            
+       “            üÿÿÿÿÿÿÿ«                   µ            üÿÿÿÿÿÿÿÄ            üÿÿÿÿÿÿÿÓ            üÿÿÿÿÿÿÿâ            üÿÿÿÿÿÿÿñ            üÿÿÿÿÿÿÿ             üÿÿÿÿÿÿÿ            üÿÿÿÿÿÿÿ(            üÿÿÿÿÿÿÿ                       .symtab .strtab .shstrtab .rela.text .data .bss .rodata .comment .note.GNU-stack .rela.eh_frame                                                                                              @       .                                   @               ¨
+      €      
+                    &                     n                                     ,                     n                                     1                     p      B                              9      0               ²      ,                             B                      Þ                                     W                     à      8                              R      @               (             
+                                                         	                 	                      (
+      {                                                    @      a                              
+ENDPROGRAM
+STARTHEADER
+./.vscode
+16893
+samuel
+samuel
+8
+4096
+ENDHEADER
+STARTHEADER
+./.vscode/settings.json
+33204
+samuel
+samuel
+8
+109
+ENDHEADER
+STARTPROGRAM
+{
+    "files.associations": {
+        "stat.h": "c",
+        "unistd.h": "c",
+        "stdlib.h": "c"
+    }
+}
+ENDPROGRAM
+STARTHEADER
+.
+16893
+samuel
+samuel
+8
+4096
+ENDHEADER
+STARTHEADER
+./packing.c
+33204
+samuel
+samuel
+16
+8183
+ENDHEADER
+STARTPROGRAM
+
+/* LIBRERIAS DEL SISTEMA QUE UTILIZA PACKING.C */
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <pwd.h>
+#include <grp.h>
+
+/*
+* Funcion:
+* --------------------------
+* 
+ 
+* basePath: 
+* root:
+
+* return: 
+*/
+
+int addHeader(char *data, char *filename)
+{
+    FILE *fichero;
+    fichero = fopen(filename, "a");
+    fputs(data, fichero);
+    fputs("\n", fichero);
+    fclose(fichero);
+    return 0;
+}
+
+/*
+* Funcion:
+* --------------------------
+* 
+ 
+* basePath: 
+* root:
+
+* return: 
+*/
+
+int addContent(FILE *data, char *filename)
+{
+    FILE *fichero;
+    int data1;
+    fichero = fopen(filename, "a");
+    data1 = 0;
+    if (data != NULL)
+    {
+        while ((data1 = fgetc(data)) != EOF)
+        {
+            fputc(data1, fichero);
+        }
+    }
+    fputs("\n", fichero);
+    fclose(data);
+    fclose(fichero);
+    return 0;
+}
+
+/*
+* Funcion: recursiveTree
+* --------------------------
+* Encargada de hacer un recorrido por todo el arbol de directorio y de archivos, es decir,
+  pasando por cada archivo/directorio dentro de una direccion en especifico.
+ 
+* basePath: La direccion base por la que comenzara el recorrido del arbol
+* filename
+* root: Un entero que representa el nivel del arbol.
+* n: Es el identificador del flag n
+* v: Es el identificador del flag v
+
+* return: nada.
+*/
+
+void packing(char *basePath, char *filename, const int root, int n, int v)
+{
+    /* Se encarga de inicializar las variables que usaremos en el recorrido */
+    int i;
+    char path[1000];
+    char str[255];
+    char buff[10000];
+
+    /* Crea un struct dirent que contiene informacion del directorio */
+    struct dirent *dp;
+
+    /* Inicializan variables para poder conocer informacion del archivo */
+    struct stat st;
+    struct passwd *pws;
+    struct group *grp;
+    mode_t mode;
+
+    /* Se crea variable que contendra el archivo a empaquetar */
+    FILE *fichero;
+
+    /* Inicializa directorios a recorrer */
+    DIR *dir;
+
+    /* Abre lo que se encuentre en la direccion que se pasa por argumento */
+    fichero = fopen(basePath, "r");
+    if (fichero != NULL)
+    {
+        /* Consigue el stat de lo que pasamos como argumento y lo linkea a nuestra variable personal creada para el caso */
+        stat(basePath, &st);
+
+        /* Encuentra el mode, para verificar que tipo de archivo tenemos a la mano */
+        mode = st.st_mode;
+
+        if (S_ISDIR(mode))
+        {
+            /* Si es directorio */
+            strcpy(str, basePath);
+
+            /* Comienza el copiado del header en el archivo a empaquetar */
+            addHeader("STARTHEADER", filename);
+
+            /* Agrega direccion relativa del archivo o directorio */
+            addHeader(str, filename);
+
+            /* Agrega el modo del archivo */
+            sprintf(buff, "%i", st.st_mode);
+            addHeader(buff, filename);
+
+            /* Agrega el username del dueÃ±o del archivo */
+            pws = getpwuid(st.st_uid);
+            sprintf(buff, "%s", pws->pw_name);
+            addHeader(buff, filename);
+
+            /* Agrega el id del grupo dueÃ±o */
+            grp = getgrgid(st.st_gid);
+            sprintf(buff, "%s", grp->gr_name);
+            addHeader(buff, filename);
+
+            /* Agrega el numero de bloques de 512 bytes guardados en memoria */
+            sprintf(buff, "%li", st.st_blocks);
+            addHeader(buff, filename);
+
+            /* Agrega el tamaÃ±o del archivo en bytes */
+            sprintf(buff, "%li", st.st_size);
+            addHeader(buff, filename);
+            addHeader("ENDHEADER", filename);
+        }
+        else if (S_ISREG(mode) && strcmp(basePath, filename))
+        {
+            /* Si es archivo regular y si el archivo a empaquetar no es una version de si mismo */
+
+            /* Copia la direccion del path en un string */
+            strcpy(str, basePath);
+
+            /* Comienza el copiado del header en el archivo a empaquetar */
+            addHeader("STARTHEADER", filename);
+
+            /* Agrega direccion relativa del archivo o directorio */
+            addHeader(str, filename);
+
+            /* Agrega el modo del archivo */
+            sprintf(buff, "%i", st.st_mode);
+            addHeader(buff, filename);
+
+            /* Agrega el username del dueÃ±o del archivo */
+            pws = getpwuid(st.st_uid);
+            sprintf(buff, "%s", pws->pw_name);
+            addHeader(buff, filename);
+
+            /* Agrega el id del grupo dueÃ±o */
+            grp = getgrgid(st.st_gid);
+            sprintf(buff, "%s", grp->gr_name);
+            addHeader(buff, filename);
+
+            /* Agrega el numero de bloques de 512 bytes guardados en memoria */
+            sprintf(buff, "%li", st.st_blocks);
+            addHeader(buff, filename);
+
+            /* Agrega el tamaÃ±o del archivo en bytes */
+            sprintf(buff, "%li", st.st_size);
+            addHeader(buff, filename);
+            addHeader("ENDHEADER", filename);
+
+            /* Copia toda la data del archivo en el paquete */
+            addHeader("STARTPROGRAM", filename);
+            addContent(fichero, filename);
+            addHeader("ENDPROGRAM", filename);
+        }
+        else if (n && S_ISLNK(mode))
+        {
+            /* Si es link */
+            /* Copia la direccion del path en un string */
+            strcpy(str, basePath);
+
+            /* Comienza el copiado del header en el archivo a empaquetar */
+            addHeader("STARTHEADER", filename);
+
+            /* Agrega direccion relativa del archivo o directorio */
+            addHeader(str, filename);
+
+            /* Agrega el modo del archivo */
+            sprintf(buff, "%i", st.st_mode);
+            addHeader(buff, filename);
+
+            /* Agrega el username del dueÃ±o del archivo */
+            pws = getpwuid(st.st_uid);
+            sprintf(buff, "%s", pws->pw_name);
+            addHeader(buff, filename);
+
+            /* Agrega el id del grupo dueÃ±o */
+            grp = getgrgid(st.st_gid);
+            sprintf(buff, "%s", grp->gr_name);
+            addHeader(buff, filename);
+
+            /* Agrega el numero de bloques de 512 bytes guardados en memoria */
+            sprintf(buff, "%li", st.st_blocks);
+            addHeader(buff, filename);
+
+            /* Agrega el tamaÃ±o del archivo en bytes */
+            sprintf(buff, "%li", st.st_size);
+            addHeader(buff, filename);
+            addHeader("ENDHEADER", filename);
+
+            /* Copia toda la data del archivo en el paquete */
+            addHeader("STARTPROGRAM", filename);
+            addContent(fichero, filename);
+            addHeader("ENDPROGRAM", filename);
+        }
+        else if (n && (S_ISBLK(mode) || S_ISCHR(mode) || S_ISFIFO(mode) || S_ISLNK(mode)))
+        {
+        }
+        else if (fichero == NULL)
+        {
+            /* Si no existe ningun archivo o directorio con ese nombre */
+        }
+
+        fclose(fichero);
+
+        /* Abre el directorio con la direccion especifica */
+        dir = opendir(basePath);
+
+        /* Si no existe tal directorio entonces se sale de la funcion */
+        if (dir == NULL)
+        {
+            return;
+        }
+
+        /* Mientras existe un apuntador que devuelva readdir(), se seguira en el ciclo */
+        while ((dp = readdir(dir)) != NULL)
+        {
+            /* Mientras el directorio no sea el base, realiza unas actividades especiales para una correcta impresion */
+            if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0)
+            {
+                /* Imprime en pantalla el nombre del archivo actual */
+                if (v)
+                {
+                    printf("packing... %s \n", dp->d_name);
+                }
+
+                /* Copia hacia la variable path el nuevo directorio base */
+                strcpy(path, basePath);
+                strcat(path, "/");
+                strcat(path, dp->d_name);
+
+                /* LLamada recursiva hacia el nuevo directorio hijo, trasladando el root por 2 */
+                packing(path, filename, root + 2, n, v);
+            }
+        }
+        /* Cierra el actual directorio para liberar el espacio de memoria */
+        closedir(dir);
+    }
+}
+ENDPROGRAM
+STARTHEADER
+./packing.h
+33204
+samuel
+samuel
+8
+119
+ENDHEADER
+STARTPROGRAM
+#ifndef PACKING_h
+#define PACKING_h
+
+void packing(char *basePath, char *filename,const int root, int n, int v);
+
+#endif
+ENDPROGRAM
+STARTHEADER
+./mytar
+33277
+samuel
+samuel
+40
+17728
+ENDHEADER
+STARTPROGRAM
+ELF          >          @        >          @ 8 	 @         @       @       @       ø      ø                   8      8      8                                                         8"      8"                    -      -      -      ø                           (-      (-      (-      ð      ð                   T      T      T      D       D              Påtd   à      à      à      t       t              Qåtd                                                  Råtd   -      -      -      è      è             /lib64/ld-linux-x86-64.so.2          GNU                        GNU F¢‘’«9¿GV8—3í§d	nÇ                                                     ·                      Ú                                             f                      {                      (                      C                                            :                      `                      ƒ                      T                      1                      Z                      ¥                      ž                      ö                       ¼                                            m                      "                      Š                      t                                                                     "                    libc.so.6 strcpy readdir sprintf fopen getpwuid closedir getgrgid __stack_chk_fail fgetc fputc fputs fclose malloc strcat opendir fscanf atoi __cxa_finalize strcmp __libc_start_main free __xstat GLIBC_2.4 GLIBC_2.2.5 _ITM_deregisterTMCloneTable __gmon_start__ _ITM_registerTMCloneTable                                               ii   Ä      ui	   Î       -                    -             Ð      0             0      Ø/                    à/                    è/                    ð/                    ø/                    0/                    8/                    @/                    H/                    P/                    X/                    `/                    h/         	           p/         
+           x/                    €/                    ˆ/                    /                    ˜/                     /                    ¨/                    °/                    ¸/                    À/                    È/                    Ð/                    HƒìH‹]&  H…ÀtÿÐHƒÄÃ         ÿ5z%  ÿ%|%  @ ÿ%z%  h    éàÿÿÿÿ%r%  h   éÐÿÿÿÿ%j%  h   éÀÿÿÿÿ%b%  h   é°ÿÿÿÿ%Z%  h   é ÿÿÿÿ%R%  h   éÿÿÿÿ%J%  h   é€ÿÿÿÿ%B%  h   épÿÿÿÿ%:%  h   é`ÿÿÿÿ%2%  h	   éPÿÿÿÿ%*%  h
+   é@ÿÿÿÿ%"%  h   é0ÿÿÿÿ%%  h   é ÿÿÿÿ%%  h   éÿÿÿÿ%
+%  h   é ÿÿÿÿ%%  h   éðþÿÿÿ%ú$  h   éàþÿÿÿ%ò$  h   éÐþÿÿÿ%ê$  h   éÀþÿÿÿ%â$  h   é°þÿÿÿ%Ú$  h   é þÿÿÿ%ò$  f        1íI‰Ñ^H‰âHƒäðPTLê  Hs  H=æ   ÿ¦$  ôD  H=É$  UHÁ$  H9øH‰åtH‹z$  H…Àt]ÿàf.„     ]Ã@ f.„     H=‰$  H5‚$  UH)þH‰åHÁþH‰ðHÁè?HÆHÑþtH‹A$  H…Àt]ÿàf„     ]Ã@ f.„     €=9$   u/Hƒ=$   UH‰åtH‹=$  èÿÿÿèHÿÿÿÆ$  ]Ã€    óÃfD  UH‰å]éfÿÿÿUH‰åHìp  ‰½œþÿÿH‰µþÿÿdH‹%(   H‰Eø1ÀH…¬þÿÿfÇ   H‹…þÿÿHƒÀH‹ ¶ ˆ…¬þÿÿH…¶þÿÿfÇ   H‹…þÿÿHƒÀH‹ ¶@ˆ…¶þÿÿH…¶þÿÿH5®  H‰Çèâýÿÿ…ÀtiH…¶þÿÿH5–  H‰ÇèÈýÿÿ…ÀtOH…¬þÿÿH5z  H‰Çè®ýÿÿ…Àt5H…ÀþÿÿfÇ ./Æ@ H‹…þÿÿHƒÀH‹H…ÀþÿÿH‰ÖH‰ÇèÚýÿÿé   H…¬þÿÿH5+  H‰Çè_ýÿÿ…Àu"H‹…þÿÿHƒÀH‹H…ÀþÿÿH‰ÖH‰Çè{üÿÿëTH…¬þÿÿH5ñ  H‰Çè#ýÿÿ…Àu:H…¶þÿÿH5Õ  H‰Çè	ýÿÿ…Àu H‹…þÿÿHƒÀH‹H…ÀþÿÿH‰ÖH‰Çè%üÿÿH…ÀþÿÿH‰ÆH=œ  ¸    èZüÿÿH…ÀþÿÿA¸   ¹    º   H‰ÆH=o  èŠ  ¸    H‹MødH3%(   tèüÿÿÉÃUH‰å‰}ü‰uø‹Eø‹Uü‰Ö‰ÁÓæ¸    +Eø‹Uü‰ÁÓú‰Ð	ð]ÃUH‰å‰}ü‰uø‹Eø‹Uü‰Ö‰ÁÓþ¸    +Eø‹Uü‰ÁÓâ‰Ð	ð]ÃUH‰åHì€N  H‰½ˆ±ÿÿH‰µ€±ÿÿdH‹%(   H‰Eø1À¿d   è1üÿÿH‰…˜±ÿÿ¿d   è üÿÿH‰… ±ÿÿ¿d   èüÿÿH‰…¨±ÿÿ¿d   èþûÿÿH‰…°±ÿÿ¿d   èíûÿÿH‰…¸±ÿÿ¿d   èÜûÿÿH‰…À±ÿÿH‹…€±ÿÿH5g  H‰ÇèÏûÿÿH‰…È±ÿÿÇ…±ÿÿ    é»  Æ…àØÿÿ H…Ð±ÿÿH56  H‰Çè\ûÿÿ…À…{  H•Ð±ÿÿH‹…È±ÿÿH5  H‰Ç¸    èòúÿÿH•Ð±ÿÿH‹…˜±ÿÿH‰ÖH‰ÇèYúÿÿH•Ð±ÿÿH‹…È±ÿÿH5â  H‰Ç¸    è·úÿÿH•Ð±ÿÿH‹… ±ÿÿH‰ÖH‰ÇèúÿÿH‹… ±ÿÿH‰Çèûÿÿ‰…”±ÿÿ‹…”±ÿÿ% ð  = @  u	H‘  ëHŠ  H‹•¨±ÿÿH‰ÆH‰×èÕùÿÿ‹…”±ÿÿ%   …Àt	HO  ëHY  H‹•¨±ÿÿH‰ÆH‰×èÄúÿÿ‹…”±ÿÿ%€   …Àt	H3  ëH(  H‹•¨±ÿÿH‰ÆH‰×è“úÿÿ‹…”±ÿÿƒà@…Àt	H  ëHù  H‹•¨±ÿÿH‰ÆH‰×èdúÿÿ‹…”±ÿÿƒà …Àt	HÀ  ëHÊ  H‹•¨±ÿÿH‰ÆH‰×è5úÿÿ‹…”±ÿÿƒà…Àt	H¦  ëH›  H‹•¨±ÿÿH‰ÆH‰×èúÿÿ‹…”±ÿÿƒà…Àt	Hy  ëHl  H‹•¨±ÿÿH‰ÆH‰×è×ùÿÿ‹…”±ÿÿƒà…Àt	H3  ëH=  H‹•¨±ÿÿH‰ÆH‰×è¨ùÿÿ‹…”±ÿÿƒà…Àt	H  ëH  H‹•¨±ÿÿH‰ÆH‰×èyùÿÿ‹…”±ÿÿƒà…Àt	Hì  ëHß  H‹•¨±ÿÿH‰ÆH‰×èJùÿÿH‹…¨±ÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH‹…¨±ÿÿHÐfÇ   ‹…”±ÿÿ% ð  =    u	H†  ëHw  H‹•¨±ÿÿH‰ÆH‰×èâøÿÿH•Ð±ÿÿH‹…È±ÿÿH5K  H‰Ç¸    è øÿÿH•Ð±ÿÿH‹…°±ÿÿH‰ÖH‰Çè‡÷ÿÿH•Ð±ÿÿH‹…È±ÿÿH5  H‰Ç¸    èå÷ÿÿH•Ð±ÿÿH‹…¸±ÿÿH‰ÖH‰ÇèL÷ÿÿH•Ð±ÿÿH‹…È±ÿÿH5Õ  H‰Ç¸    èª÷ÿÿH•Ð±ÿÿH‹…È±ÿÿH5³  H‰Ç¸    èˆ÷ÿÿH•Ð±ÿÿH‹…À±ÿÿH‰ÖH‰ÇèïöÿÿH‹…À±ÿÿH‰Çèð÷ÿÿ…±ÿÿH…àØÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…àØÿÿHÐfÇ   H‹•¨±ÿÿH…àØÿÿH‰ÖH‰Çè­÷ÿÿH…àØÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…àØÿÿHÐfÇ   H‹•°±ÿÿH…àØÿÿH‰ÖH‰Çè`÷ÿÿH…àØÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…àØÿÿHÐfÇ   H‹•¸±ÿÿH…àØÿÿH‰ÖH‰Çè÷ÿÿH…àØÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…àØÿÿHÐfÇ   H‹•À±ÿÿH…àØÿÿH‰ÖH‰ÇèÆöÿÿH…àØÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…àØÿÿHÐH¾      	 H‰0Æ@ H‹•˜±ÿÿH…àØÿÿH‰ÖH‰ÇèmöÿÿH…àØÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…àØÿÿHÐfÇ 
+ H…àØÿÿH‰ÆH=¦
+  ¸    èNõÿÿH•Ð±ÿÿH‹…È±ÿÿH5‡
+  H‰Ç¸    è\õÿÿƒøÿ…úÿÿ‹…±ÿÿ‰ÆH=t
+  ¸    è
+õÿÿH‹…˜±ÿÿH‰Çè›ôÿÿH‹… ±ÿÿH‰ÇèŒôÿÿH‹…°±ÿÿH‰Çè}ôÿÿH‹…¸±ÿÿH‰ÇènôÿÿH‹…À±ÿÿH‰Çè_ôÿÿH‹…È±ÿÿH‰Çèpôÿÿ¸    H‹MødH3%(   tè‡ôÿÿÉÃUH‰åHƒì H‰}èH‰uàH‹EàH5ü	  H‰Çè"õÿÿH‰EøH‹UøH‹EèH‰ÖH‰Çè{ôÿÿH‹EøH‰Æ¿
+   èªôÿÿH‹EøH‰Çèþóÿÿ¸    ÉÃUH‰åHƒì H‰}èH‰uàH‹EàH5ž	  H‰ÇèÄôÿÿH‰EøÇEô    Hƒ}è t(ëH‹Uø‹EôH‰Ö‰ÇèOôÿÿH‹EèH‰Çè#ôÿÿ‰Eôƒ}ôÿuÚH‹EøH‰Æ¿
+   è)ôÿÿH‹EèH‰Çè}óÿÿH‹EøH‰Çèqóÿÿ¸    ÉÃUH‰åHìð,  H‰½(ÓÿÿH‰µ Óÿÿ‰•Óÿÿ‰ÓÿÿD‰…ÓÿÿdH‹%(   H‰Eø1ÀH‹…(ÓÿÿH5å  H‰Çè	ôÿÿH‰…8ÓÿÿHƒ½8Óÿÿ „¾  H•`ÓÿÿH‹…(ÓÿÿH‰ÖH‰Çè;  ‹…xÓÿÿ‰…4Óÿÿ‹…4Óÿÿ% ð  = @  …¥  H‹•(ÓÿÿH…ðÓÿÿH‰ÖH‰Çè òÿÿH‹… ÓÿÿH‰ÆH=e  èEþÿÿH‹• ÓÿÿH…ðÓÿÿH‰ÖH‰Çè,þÿÿ‹•xÓÿÿH…àØÿÿH5?  H‰Ç¸    è€óÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰Çèòýÿÿ‹…|Óÿÿ‰ÇèZòÿÿH‰…@ÓÿÿH‹…@ÓÿÿH‹H…àØÿÿH‰ÖH‰ÇèòÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰Çè©ýÿÿ‹…€Óÿÿ‰ÇèAòÿÿH‰…HÓÿÿH‹…HÓÿÿH‹H…àØÿÿH‰ÖH‰Çè¾ñÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰Çè`ýÿÿH‹• ÓÿÿH…àØÿÿH5u  H‰Ç¸    è³òÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰Çè%ýÿÿH‹•ÓÿÿH…àØÿÿH5:  H‰Ç¸    èxòÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰ÇèêüÿÿH‹… ÓÿÿH‰ÆH=  èÔüÿÿéh  ‹…4Óÿÿ% ð  = €  …  H‹• ÓÿÿH‹…(ÓÿÿH‰ÖH‰Çè¥ñÿÿ…À„ê  H‹•(ÓÿÿH…ðÓÿÿH‰ÖH‰ÇèÄðÿÿH‹… ÓÿÿH‰ÆH=‰  èiüÿÿH‹• ÓÿÿH…ðÓÿÿH‰ÖH‰ÇèPüÿÿ‹•xÓÿÿH…àØÿÿH5c  H‰Ç¸    è¤ñÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰Çèüÿÿ‹…|Óÿÿ‰Çè~ðÿÿH‰…@ÓÿÿH‹…@ÓÿÿH‹H…àØÿÿH‰ÖH‰Çè+ðÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰ÇèÍûÿÿ‹…€Óÿÿ‰ÇèeðÿÿH‰…HÓÿÿH‹…HÓÿÿH‹H…àØÿÿH‰ÖH‰ÇèâïÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰Çè„ûÿÿH‹• ÓÿÿH…àØÿÿH5™  H‰Ç¸    è×ðÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰ÇèIûÿÿH‹•ÓÿÿH…àØÿÿH5^  H‰Ç¸    èœðÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰ÇèûÿÿH‹… ÓÿÿH‰ÆH=+  èøúÿÿH‹… ÓÿÿH‰ÆH=  èâúÿÿH‹• ÓÿÿH‹…8ÓÿÿH‰ÖH‰Çè'ûÿÿH‹… ÓÿÿH‰ÆH=ý  è³úÿÿéG  ƒ½Óÿÿ „:  ‹…4Óÿÿ% ð  =    …ç  H‹•(ÓÿÿH…ðÓÿÿH‰ÖH‰Çè·îÿÿH‹… ÓÿÿH‰ÆH=|  è\úÿÿH‹• ÓÿÿH…ðÓÿÿH‰ÖH‰ÇèCúÿÿ‹•xÓÿÿH…àØÿÿH5V  H‰Ç¸    è—ïÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰Çè	úÿÿ‹…|Óÿÿ‰ÇèqîÿÿH‰…@ÓÿÿH‹…@ÓÿÿH‹H…àØÿÿH‰ÖH‰ÇèîÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰ÇèÀùÿÿ‹…€Óÿÿ‰ÇèXîÿÿH‰…HÓÿÿH‹…HÓÿÿH‹H…àØÿÿH‰ÖH‰ÇèÕíÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰ÇèwùÿÿH‹• ÓÿÿH…àØÿÿH5Œ  H‰Ç¸    èÊîÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰Çè<ùÿÿH‹•ÓÿÿH…àØÿÿH5Q  H‰Ç¸    èîÿÿH‹• ÓÿÿH…àØÿÿH‰ÖH‰ÇèùÿÿH‹… ÓÿÿH‰ÆH=  èëøÿÿH‹… ÓÿÿH‰ÆH=  èÕøÿÿH‹• ÓÿÿH‹…8ÓÿÿH‰ÖH‰ÇèùÿÿH‹… ÓÿÿH‰ÆH=ð  è¦øÿÿë=ƒ½Óÿÿ t4‹…4Óÿÿ% ð  = `  t"‹…4Óÿÿ% ð  =    t‹…4Óÿÿ% ð  =   H‹…8ÓÿÿH‰Çè­ìÿÿH‹…(ÓÿÿH‰Çè®ìÿÿH‰…PÓÿÿHƒ½PÓÿÿ „B  é  H‹…XÓÿÿHƒÀH5m  H‰Çèíÿÿ…À„æ   H‹…XÓÿÿHƒÀH5M  H‰Çèøìÿÿ…À„Ä   ƒ½Óÿÿ tH‹…XÓÿÿHƒÀH‰ÆH="  ¸    èXìÿÿH‹•(ÓÿÿH…ðÔÿÿH‰ÖH‰ÇèïëÿÿH…ðÔÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…ðÔÿÿHÐfÇ / H‹…XÓÿÿHPH…ðÔÿÿH‰ÖH‰Çè¾ìÿÿ‹…Óÿÿx‹Óÿÿ‹•ÓÿÿH‹µ ÓÿÿH…ðÔÿÿA‰È‰Ñ‰úH‰ÇèøÿÿH‹…PÓÿÿH‰Çè=ìÿÿH‰…XÓÿÿHƒ½XÓÿÿ …ÔþÿÿH‹…PÓÿÿH‰ÇèÙëÿÿëH‹EødH3%(   tèbëÿÿÉÃAWAVI‰×AUATL%f  UH-f  SA‰ýI‰öL)åHƒìHÁýè¯êÿÿH…ít 1Û„     L‰úL‰öD‰ïAÿÜHƒÃH9ÝuêHƒÄ[]A\A]A^A_Ãf.„     óÃf.„     @ H‰òH‰þ¿   é`ëÿÿHƒìHƒÄÃ         / . %s 
+    r STARTHEADER %s d - w x l      
+Total bytes of files packed: %i
+ a r STARTHEADER %i %li ENDHEADER STARTPROGRAM ENDPROGRAM . .. packing... %s 
+ ;t      ÀéÿÿÀ    ëÿÿè   0ëÿÿ   :ìÿÿ   îÿÿ   Bîÿÿ@  mîÿÿ`  ›õÿÿ€  ùõÿÿ   †öÿÿÀ  Àþÿÿà  0ÿÿÿ(  @ÿÿÿ@             zR x      ˜êÿÿ+                  zR x  $      øèÿÿ`   FJw€ ?;*3$"       D   0êÿÿ              \   2ëÿÿÝ   A†CØ    |   ïìÿÿ+    A†Cf      œ   úìÿÿ+    A†Cf      ¼   íÿÿ.   A†C)    Ü   ôÿÿ^    A†CY     ü   Qôÿÿ    A†Cˆ       ¾ôÿÿ:   A†C5 D   <  Øüÿÿe    BBŽE B(ŒH0†H8ƒM@r8A0A(B BBB    „   ýÿÿ              œ  øüÿÿ                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 Ð                           €	             0             -                            -                    õþÿo    ˜             @             ¸      
+                                                 /             ø                           ˆ             È             À       	                            ûÿÿo          þÿÿo    ˜      ÿÿÿo           ðÿÿo    `      ùÿÿo                                                                                           (-                      ¶	      Æ	      Ö	      æ	      ö	      
+      
+      &
+      6
+      F
+      V
+      f
+      v
+      †
+      –
+      ¦
+      ¶
+      Æ
+      Ö
+      æ
+      ö
+                                                      0      GCC: (Ubuntu 7.4.0-1ubuntu1~18.04.1) 7.4.0                                    8                    T                    t                    ˜                    ¸                    @                    `                    ˜                   	 È                   
+ ˆ                    €	                     	                                                             0                    @                    à                    X                     -                     -                    (-                    /                     0                    0                                        ñÿ                     @                   €              !     Ð              7     0             F      -              m                   y     -              ˜    ñÿ                Ÿ    ñÿ                «    ñÿ                ²    ñÿ                    ñÿ                ¼     4"                   ñÿ                2                  Ê       -              Û     (-              ä      -              ÷      à              
+    /                                0                 7                     I    Ù             T                      ¬      0              p                     „    M      .          0              –                     ª                     ¿                     *    0              Õ                     œ                     ñ                         ÷      +                            )                     =                     P                     f    f      :      n                                               {      ^       ª     0              ·                     Ë                      Ú   0              ç    @             ö                                                      e       0                     Ö     0              D    "      +       °          +       Q    0              ]          Ý      b                     u                     ‡                     ›                     °   0              ¼                      Ö  "                   *    €	               crtstuff.c deregister_tm_clones __do_global_dtors_aux completed.7697 __do_global_dtors_aux_fini_array_entry frame_dummy __frame_dummy_init_array_entry main.c encrypted.c look.c packing.c __FRAME_END__ __init_array_end _DYNAMIC __init_array_start __GNU_EH_FRAME_HDR _GLOBAL_OFFSET_TABLE_ __libc_csu_fini __stat free@@GLIBC_2.2.5 addContent _ITM_deregisterTMCloneTable strcpy@@GLIBC_2.2.5 packedInfo _edata fclose@@GLIBC_2.2.5 opendir@@GLIBC_2.2.5 getpwuid@@GLIBC_2.2.5 __stack_chk_fail@@GLIBC_2.4 getgrgid@@GLIBC_2.2.5 rotarIzquierda fputs@@GLIBC_2.2.5 fscanf@@GLIBC_2.2.5 fgetc@@GLIBC_2.2.5 closedir@@GLIBC_2.2.5 packing fputc@@GLIBC_2.2.5 __libc_start_main@@GLIBC_2.2.5 addHeader __data_start strcmp@@GLIBC_2.2.5 __gmon_start__ __dso_handle _IO_stdin_used __xstat@@GLIBC_2.2.5 readdir@@GLIBC_2.2.5 __libc_csu_init malloc@@GLIBC_2.2.5 rotarDerecha __bss_start main fopen@@GLIBC_2.2.5 atoi@@GLIBC_2.2.5 strcat@@GLIBC_2.2.5 sprintf@@GLIBC_2.2.5 __TMC_END__ _ITM_registerTMCloneTable __cxa_finalize@@GLIBC_2.2.5  .symtab .strtab .shstrtab .interp .note.ABI-tag .note.gnu.build-id .gnu.hash .dynsym .dynstr .gnu.version .gnu.version_r .rela.dyn .rela.plt .init .plt.got .text .fini .rodata .eh_frame_hdr .eh_frame .init_array .fini_array .dynamic .data .bss .comment                                                                              8      8                                    #             T      T                                     1             t      t      $                              D   öÿÿo       ˜      ˜                                   N             ¸      ¸      ˆ                          V             @      @                                   ^   ÿÿÿo       `      `      6                            k   þÿÿo       ˜      ˜      0                            z             È      È      À                            „      B       ˆ      ˆ      ø                          Ž             €	      €	                                    ‰              	       	      `                            ”                                                                                                               £             0      0      	                              ©             @      @                                     ±             à      à      t                              ¿             X       X       à                             É             -      -                                   Õ              -       -                                   á             (-      (-      ð                           ˜             /      /      è                             ê              0       0                                    ð             0      0                                    õ      0               0      +                                                   @0      Ð         /                 	                      9      ò                                                   =      þ                              
+ENDPROGRAM
+STARTHEADER
+./encrypted.o
+33204
+samuel
+samuel
+8
+1416
+ENDHEADER
+STARTPROGRAM
+ELF          >                    È          @     @  
+ UH‰å‰}ü‰uø‹Eø‹Uü‰Ö‰ÁÓæ¸    +Eø‹Uü‰ÁÓú‰Ð	ð]ÃUH‰å‰}ü‰uø‹Eø‹Uü‰Ö‰ÁÓþ¸    +Eø‹Uü‰ÁÓâ‰Ð	ð]Ã GCC: (Ubuntu 7.4.0-1ubuntu1~18.04.1) 7.4.0              zR x            +    A†Cf      <       +    A†Cf                               ñÿ                                                                                                                                                                 +            +       +        encrypted.c rotarIzquierda rotarDerecha                              @             +        .symtab .strtab .shstrtab .text .data .bss .comment .note.GNU-stack .rela.eh_frame                                                                                          @       V                              !                     –                                      '                     –                                      ,      0               –       ,                             5                      Â                                      J                     È       X                              E      @               @      0                                                        ð       	                    	                            )                                                    p      T                              
+ENDPROGRAM
+STARTHEADER
+./look.o
+33204
+samuel
+samuel
+16
+5608
+ENDHEADER
+STARTPROGRAM
+ELF          >                    ¨          @     @   UH‰åHì€N  H‰½ˆ±ÿÿH‰µ€±ÿÿdH‹%(   H‰Eø1À¿d   è    H‰…˜±ÿÿ¿d   è    H‰… ±ÿÿ¿d   è    H‰…¨±ÿÿ¿d   è    H‰…°±ÿÿ¿d   è    H‰…¸±ÿÿ¿d   è    H‰…À±ÿÿH‹…€±ÿÿH5    H‰Çè    H‰…È±ÿÿÇ…±ÿÿ    é»  Æ…àØÿÿ H…Ð±ÿÿH5    H‰Çè    …À…{  H•Ð±ÿÿH‹…È±ÿÿH5    H‰Ç¸    è    H•Ð±ÿÿH‹…˜±ÿÿH‰ÖH‰Çè    H•Ð±ÿÿH‹…È±ÿÿH5    H‰Ç¸    è    H•Ð±ÿÿH‹… ±ÿÿH‰ÖH‰Çè    H‹… ±ÿÿH‰Çè    ‰…”±ÿÿ‹…”±ÿÿ% ð  = @  u	H    ëH    H‹•¨±ÿÿH‰ÆH‰×è    ‹…”±ÿÿ%   …Àt	H    ëH    H‹•¨±ÿÿH‰ÆH‰×è    ‹…”±ÿÿ%€   …Àt	H    ëH    H‹•¨±ÿÿH‰ÆH‰×è    ‹…”±ÿÿƒà@…Àt	H    ëH    H‹•¨±ÿÿH‰ÆH‰×è    ‹…”±ÿÿƒà …Àt	H    ëH    H‹•¨±ÿÿH‰ÆH‰×è    ‹…”±ÿÿƒà…Àt	H    ëH    H‹•¨±ÿÿH‰ÆH‰×è    ‹…”±ÿÿƒà…Àt	H    ëH    H‹•¨±ÿÿH‰ÆH‰×è    ‹…”±ÿÿƒà…Àt	H    ëH    H‹•¨±ÿÿH‰ÆH‰×è    ‹…”±ÿÿƒà…Àt	H    ëH    H‹•¨±ÿÿH‰ÆH‰×è    ‹…”±ÿÿƒà…Àt	H    ëH    H‹•¨±ÿÿH‰ÆH‰×è    H‹…¨±ÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH‹…¨±ÿÿHÐfÇ   ‹…”±ÿÿ% ð  =    u	H    ëH    H‹•¨±ÿÿH‰ÆH‰×è    H•Ð±ÿÿH‹…È±ÿÿH5    H‰Ç¸    è    H•Ð±ÿÿH‹…°±ÿÿH‰ÖH‰Çè    H•Ð±ÿÿH‹…È±ÿÿH5    H‰Ç¸    è    H•Ð±ÿÿH‹…¸±ÿÿH‰ÖH‰Çè    H•Ð±ÿÿH‹…È±ÿÿH5    H‰Ç¸    è    H•Ð±ÿÿH‹…È±ÿÿH5    H‰Ç¸    è    H•Ð±ÿÿH‹…À±ÿÿH‰ÖH‰Çè    H‹…À±ÿÿH‰Çè    …±ÿÿH…àØÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…àØÿÿHÐfÇ   H‹•¨±ÿÿH…àØÿÿH‰ÖH‰Çè    H…àØÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…àØÿÿHÐfÇ   H‹•°±ÿÿH…àØÿÿH‰ÖH‰Çè    H…àØÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…àØÿÿHÐfÇ   H‹•¸±ÿÿH…àØÿÿH‰ÖH‰Çè    H…àØÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…àØÿÿHÐfÇ   H‹•À±ÿÿH…àØÿÿH‰ÖH‰Çè    H…àØÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…àØÿÿHÐH¾      	 H‰0Æ@ H‹•˜±ÿÿH…àØÿÿH‰ÖH‰Çè    H…àØÿÿHÇÁÿÿÿÿH‰Â¸    H‰×ò®H‰ÈH÷ÐHPÿH…àØÿÿHÐfÇ 
+ H…àØÿÿH‰ÆH=    ¸    è    H•Ð±ÿÿH‹…È±ÿÿH5    H‰Ç¸    è    ƒøÿ…úÿÿ‹…±ÿÿ‰ÆH=    ¸    è    H‹…˜±ÿÿH‰Çè    H‹… ±ÿÿH‰Çè    H‹…°±ÿÿH‰Çè    H‹…¸±ÿÿH‰Çè    H‹…À±ÿÿH‰Çè    H‹…È±ÿÿH‰Çè    ¸    H‹MødH3%(   tè    ÉÃ  r STARTHEADER %s d - w x l      
+Total bytes of files packed: %i
+  GCC: (Ubuntu 7.4.0-1ubuntu1~18.04.1) 7.4.0          zR x            .   A†C)                             ñÿ                                                                                                                                                                                       .                            )                      0                      6                      =                      D                      K                      P                      W                      ^                      c                      j                       look.c packedInfo _GLOBAL_OFFSET_TABLE_ malloc fopen strcmp fscanf strcpy atoi strcat printf free fclose __stack_chk_fail      .             üÿÿÿÿÿÿÿ?             üÿÿÿÿÿÿÿP             üÿÿÿÿÿÿÿa             üÿÿÿÿÿÿÿr             üÿÿÿÿÿÿÿƒ             üÿÿÿÿÿÿÿ˜             üÿÿÿÿÿÿÿ              üÿÿÿÿÿÿÿË             þÿÿÿÿÿÿÿÓ             üÿÿÿÿÿÿÿð             
+       ý             üÿÿÿÿÿÿÿ            üÿÿÿÿÿÿÿ+            
+       8            üÿÿÿÿÿÿÿQ            üÿÿÿÿÿÿÿ`            üÿÿÿÿÿÿÿ                   ˆ                   š            üÿÿÿÿÿÿÿ°            üÿÿÿÿÿÿÿ¹                   Ë            üÿÿÿÿÿÿÿá                   ê                   ü            üÿÿÿÿÿÿÿ                                      +            üÿÿÿÿÿÿÿ?            üÿÿÿÿÿÿÿH                   Z            üÿÿÿÿÿÿÿn                   w                   ‰            üÿÿÿÿÿÿÿ                   ¦                   ¸            üÿÿÿÿÿÿÿÌ            üÿÿÿÿÿÿÿÕ                   ç            üÿÿÿÿÿÿÿû                                                  üÿÿÿÿÿÿÿ*                   3                   E            üÿÿÿÿÿÿÿ’                   ›                   ­            üÿÿÿÿÿÿÿÂ            
+       Ï            üÿÿÿÿÿÿÿè            üÿÿÿÿÿÿÿý            
+       
+            üÿÿÿÿÿÿÿ#            üÿÿÿÿÿÿÿ8            
+       E            üÿÿÿÿÿÿÿZ            
+       g            üÿÿÿÿÿÿÿ€            üÿÿÿÿÿÿÿ            üÿÿÿÿÿÿÿâ            üÿÿÿÿÿÿÿ/            üÿÿÿÿÿÿÿ|            üÿÿÿÿÿÿÿÉ            üÿÿÿÿÿÿÿ"            üÿÿÿÿÿÿÿg            
+       q            üÿÿÿÿÿÿÿ†            
+       “            üÿÿÿÿÿÿÿ«                   µ            üÿÿÿÿÿÿÿÄ            üÿÿÿÿÿÿÿÓ            üÿÿÿÿÿÿÿâ            üÿÿÿÿÿÿÿñ            üÿÿÿÿÿÿÿ             üÿÿÿÿÿÿÿ            üÿÿÿÿÿÿÿ(            üÿÿÿÿÿÿÿ                       .symtab .strtab .shstrtab .rela.text .data .bss .rodata .comment .note.GNU-stack .rela.eh_frame                                                                                              @       .                                   @               ¨
+      €      
+                    &                     n                                     ,                     n                                     1                     p      B                              9      0               ²      ,                             B                      Þ                                     W                     à      8                              R      @               (             
+                                                         	                 	                      (
+      {                                                    @      a                              
+ENDPROGRAM
+STARTHEADER
+./.vscode
+16893
+samuel
+samuel
+8
+4096
+ENDHEADER
+STARTHEADER
+./.vscode/settings.json
+33204
+samuel
+samuel
+8
+109
+ENDHEADER
+STARTPROGRAM
+{
+    "files.associations": {
+        "stat.h": "c",
+        "unistd.h": "c",
+        "stdlib.h": "c"
+    }
+}
+ENDPROGRAM

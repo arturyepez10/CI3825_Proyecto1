@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include "look.h"
 #include "packing.h"
+#include "unpacking.h"
 #include <string.h>
 
 int main(int argc, char *argv[])
@@ -37,9 +38,11 @@ int main(int argc, char *argv[])
 
     printf("%s \n", newPath);
 
-    packing(".", newPath, 1, 0, 1);
+    /*packing(".", newPath, 1, 0, 1);*/
 
     /*packedInfo(newPath);*/
+
+    unpacking("./test4");
 
     return 0;
 }
