@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
     /* Manipula los argumentos y asigna valores correspondientes */
     strcpy(buf, " ");
     buf[0] = argv[1][0];
-    
+
     strcpy(buf2, " ");
     buf2[0] = argv[1][1];
 
@@ -37,10 +37,9 @@ int main(int argc, char *argv[])
 
     printf("%s \n", newPath);
 
+    packing(".", newPath, 1, 0, 1);
 
-    /* packing(".", newPath, 1, 0, 1); */
-
-    packedInfo(".", newPath);
+    /*packedInfo(".", newPath);*/
 
     return 0;
 }

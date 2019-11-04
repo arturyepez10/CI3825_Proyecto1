@@ -76,7 +76,7 @@ int addContent(FILE *data, char *filename)
 * return: nada.
 */
 
-void packing(char *basePath, char *filename,const int root, int n, int v)
+void packing(char *basePath, char *filename, const int root, int n, int v)
 {
     /* Se encarga de inicializar las variables que usaremos en el recorrido */
     int i;
@@ -102,7 +102,7 @@ void packing(char *basePath, char *filename,const int root, int n, int v)
     /* Abre lo que se encuentre en la direccion que se pasa por argumento */
     fichero = fopen(basePath, "r");
     if (fichero != NULL)
-    {   
+    {
         /* Consigue el stat de lo que pasamos como argumento y lo linkea a nuestra variable personal creada para el caso */
         stat(basePath, &st);
 
@@ -112,6 +112,36 @@ void packing(char *basePath, char *filename,const int root, int n, int v)
         if (S_ISDIR(mode))
         {
             /* Si es directorio */
+            strcpy(str, basePath);
+
+            /* Comienza el copiado del header en el archivo a empaquetar */
+            addHeader("STARTHEADER", filename);
+
+            /* Agrega direccion relativa del archivo o directorio */
+            addHeader(str, filename);
+
+            /* Agrega el modo del archivo */
+            sprintf(buff, "%i", st.st_mode);
+            addHeader(buff, filename);
+
+            /* Agrega el username del dueño del archivo */
+            pws = getpwuid(st.st_uid);
+            sprintf(buff, "%s", pws->pw_name);
+            addHeader(buff, filename);
+
+            /* Agrega el id del grupo dueño */
+            grp = getgrgid(st.st_gid);
+            sprintf(buff, "%s", grp->gr_name);
+            addHeader(buff, filename);
+
+            /* Agrega el numero de bloques de 512 bytes guardados en memoria */
+            sprintf(buff, "%li", st.st_blocks);
+            addHeader(buff, filename);
+
+            /* Agrega el tamaño del archivo en bytes */
+            sprintf(buff, "%li", st.st_size);
+            addHeader(buff, filename);
+            addHeader("ENDHEADER", filename);
         }
         else if (S_ISREG(mode) && strcmp(basePath, filename))
         {
@@ -154,20 +184,57 @@ void packing(char *basePath, char *filename,const int root, int n, int v)
             addContent(fichero, filename);
             addHeader("ENDPROGRAM", filename);
             return;
+        }
+        else if (n && S_ISLNK(mode))
+        {
+            /* Si es link */
+            /* Copia la direccion del path en un string */
+            strcpy(str, basePath);
 
-            fclose(fichero);
+            /* Comienza el copiado del header en el archivo a empaquetar */
+            addHeader("STARTHEADER", filename);
+
+            /* Agrega direccion relativa del archivo o directorio */
+            addHeader(str, filename);
+
+            /* Agrega el modo del archivo */
+            sprintf(buff, "%i", st.st_mode);
+            addHeader(buff, filename);
+
+            /* Agrega el username del dueño del archivo */
+            pws = getpwuid(st.st_uid);
+            sprintf(buff, "%s", pws->pw_name);
+            addHeader(buff, filename);
+
+            /* Agrega el id del grupo dueño */
+            grp = getgrgid(st.st_gid);
+            sprintf(buff, "%s", grp->gr_name);
+            addHeader(buff, filename);
+
+            /* Agrega el numero de bloques de 512 bytes guardados en memoria */
+            sprintf(buff, "%li", st.st_blocks);
+            addHeader(buff, filename);
+
+            /* Agrega el tamaño del archivo en bytes */
+            sprintf(buff, "%li", st.st_size);
+            addHeader(buff, filename);
+            addHeader("ENDHEADER", filename);
+
+            /* Copia toda la data del archivo en el paquete */
+            addHeader("STARTPROGRAM", filename);
+            addContent(fichero, filename);
+            addHeader("ENDPROGRAM", filename);
             return;
         }
         else if (n && (S_ISBLK(mode) || S_ISCHR(mode) || S_ISFIFO(mode) || S_ISLNK(mode)))
         {
-            /* Si es */
-            return;
         }
         else if (fichero == NULL)
-        {   
+        {
             /* Si no existe ningun archivo o directorio con ese nombre */
-            return;
         }
+
+        fclose(fichero);
 
         /* Abre el directorio con la direccion especifica */
         dir = opendir(basePath);
@@ -196,7 +263,7 @@ void packing(char *basePath, char *filename,const int root, int n, int v)
                 strcat(path, dp->d_name);
 
                 /* LLamada recursiva hacia el nuevo directorio hijo, trasladando el root por 2 */
-                packing(path, filename,root + 2, n, v);
+                packing(path, filename, root + 2, n, v);
             }
         }
         /* Cierra el actual directorio para liberar el espacio de memoria */
