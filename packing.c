@@ -11,53 +11,89 @@
 #include <grp.h>
 
 /*
-* Funcion:
+* Funcion: ADDHEADER
 * --------------------------
-* 
+* Funcion que se encarga de ir agregando al encabezado creado para el archivo/directorio
+  a empaquetar. 
  
-* basePath: 
-* root:
+* data: Es el contenido que se desea agregar al archivo.
+* filename: Es el nombre del fichero donde se agregara la data.
 
-* return: 
+* return: retorna un entero que esta asociado a como fue la terminacion del programa.
 */
 
 int addHeader(char *data, char *filename)
-{
+{   
+    /* Abre el fichero cuyo nombre es filename */
     FILE *fichero;
     fichero = fopen(filename, "a");
+
+    /* Maneja el caso donde el archivo no exista */
+    if (fichero == NULL) 
+    {
+        printf("ERROR: No existe un archivo llamado %s\n", filename);
+        return 1;
+    }
+
+    /* Asigna la data corresondiente al fichero y acto seguido asigna un salto de linea */
     fputs(data, fichero);
     fputs("\n", fichero);
+
+    /* Cierra el archivo donde se agrego el encabezado */
     fclose(fichero);
+
     return 0;
 }
 
 /*
-* Funcion:
+* Funcion: ADDCONTENT
 * --------------------------
 * 
  
-* basePath: 
-* root:
+* data: 
+* filename:
 
-* return: 
+* return: retorna un entero que esta asociado a como fue la terminacion del programa.
 */
 
 int addContent(FILE *data, char *filename)
-{
+{   
+    /* Abre el fichero cuyo nombre es filename */
     FILE *fichero;
+
+    /* Es una variable entero temporal para iterar sobre las lineas del archivo */
     int data1;
+
+    /* Abre el fichero cuyo nombre es filename */
     fichero = fopen(filename, "a");
+
+    /* Maneja el caso donde el archivo no exista */
+    if (fichero == NULL) 
+    {
+        printf("ERROR: No existe un archivo llamado %s\n", filename);
+        return 1;
+    }
+
+    /* Verifica que la data que se le haya pasado no sea nula */
     data1 = 0;
     if (data != NULL)
-    {
+    {   
+        /* Itera sobre las lineas del archivo para in agregando el contenido */
         while ((data1 = fgetc(data)) != EOF)
         {
             fputc(data1, fichero);
         }
     }
+
+    /* Inserta un salto de linea una vez se haya agregado todo el contenido */
     fputs("\n", fichero);
+
+    /* Se cierra el archivo al que se le copio todo el contenido */
     fclose(data);
+
+    /* Cierra el archivo donde se agrego el contenido */
     fclose(fichero);
+
     return 0;
 }
 
@@ -153,9 +189,6 @@ void packing(char *basePath, char *filename,const int root, int n, int v)
             addHeader("STARTPROGRAM", filename);
             addContent(fichero, filename);
             addHeader("ENDPROGRAM", filename);
-            return;
-
-            fclose(fichero);
             return;
         }
         else if (n && (S_ISBLK(mode) || S_ISCHR(mode) || S_ISFIFO(mode) || S_ISLNK(mode)))
