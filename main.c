@@ -22,7 +22,8 @@
 * Funcion: MAIN
 * --------------------------
 * Controla las llamadas principales del programa y que opera entre las opciones disponibles,
-  para empaquetar/ desempaquetar un archivo, cifrarlo/ descifrarlo, etc [ARREGLAR xd]
+  para empaquetar/ desempaquetar un archivo, cifrarlo/ descifrarlo, etc. Funciona como parser para
+  todos los posibles casos del uso de las funciones y operaciones.
  
 * argc: La cantidad de argumentos pasados en la llamada realizada por linea
   de comandos.
@@ -207,16 +208,16 @@ int main(int argc, char **argv)
         /* Manipula el valor de f y asigna la direccion correspondiente del archivo donde se empaquetara */
         strcpy(buf, " ");
         buf[0] = fvalue[0];
-            
         strcpy(buf2, " ");
         buf2[0] = fvalue[1];
 
-        /* */
+        /* Se encarga de separar el argumento de f y luego chequea si lo tiene */
         fcvalue = strtok(fvalue, "_");
         fcvalue = strtok(NULL, "_");
         
 
-        /* Manipula el 2do valor de f y asigna la direccion correspondiente del archivo donde se empaquetara */
+        /* Manipula el 2do valor de f y asigna la direccion correspondiente del archivo donde se empaquetara
+           en caso de contar si quiera con un 2do argumento */
         if (fcvalue != NULL)
         {
             strcpy(buf3, " ");
@@ -226,7 +227,8 @@ int main(int argc, char **argv)
             buf4[0] = fcvalue[1];
         }
 
-        /* */
+        /* Manipula el argumento del valor de f para identificar si es una direccion absoluta o relativa y 
+           hacer asignaciones correspondientes segun sea el caso */
         if (strcmp(buf2, "/") != 0 && strcmp(buf, ".") != 0 && strcmp(buf, "/") != 0)
         {
             strcpy(newPathFile, "./");
@@ -241,13 +243,13 @@ int main(int argc, char **argv)
             strcpy(newPathFile, fvalue);
         }
 
-        /* */
+        /* Manipula el argumento del valor del segundo argumento de f (en caso de tenerlo) para identificar 
+           si es una direccion absoluta o relativa y hacer asignaciones correspondientes segun sea el caso */
         if (strcmp(buf4, "/") != 0 && strcmp(buf3, ".") != 0 && strcmp(buf3, "/") != 0 && fcvalue != NULL)
         {
             strcpy(newPackingPathFile, "./");
             strcat(newPackingPathFile, fcvalue);
         }
-
         else if (strcmp(buf3, "/") == 0 && fcvalue != NULL)
         {
             strcpy(newPackingPathFile, fcvalue);
@@ -257,7 +259,8 @@ int main(int argc, char **argv)
             strcpy(newPackingPathFile, fcvalue);
         }
 
-        
+        /* Si no posee un 2do argumento, simplemente asigna a la variable del archivo a empaquetar como el directorio
+           raiz */
         if (fcvalue == NULL)
         {
             strcpy(newPackingPathFile, ".");
